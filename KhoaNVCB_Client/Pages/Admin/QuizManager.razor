@@ -1,0 +1,341 @@
+﻿@page "/admin/quizzes"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@inject CategoryService CategoryService
+@inject QuizService QuizService
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Authorization          @* <--- THÊM DÒNG NÀY *@
+@attribute [Authorize(Roles = "Admin")]
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <h3 class="fw-bold text-uppercase border-start border-danger border-4 ps-2" style="color: #b71c1c;">
+            QUẢN LÝ CÂU HỎI TRẮC NGHIỆM
+        </h3>
+    </div>
+
+    <div class="row">
+        @* CỘT TRÁI: FORM CẤU HÌNH VÀ IMPORT *@
+        <div class="col-lg-4 mb-4">
+            @* KHỐI 1: CHỌN CHUYÊN MỤC *@
+            <div class="card shadow-sm border-0 mb-4 rounded-0">
+                <div class="card-header bg-dark text-white fw-bold rounded-0 text-uppercase">
+                    1. CHỌN CHUYÊN MỤC
+                </div>
+                <div class="card-body bg-light">
+                    <select class="form-select" @bind="selectedCategoryId" @bind:after="LoadQuestions">
+                        <option value="0">-- Chọn chuyên mục để thao tác --</option>
+                        @if (categories != null)
+                        {
+                            @foreach (var cat in categories)
+                            {
+                                <option value="@cat.CategoryId">@cat.CategoryName</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+
+            @* KHỐI 2: IMPORT EXCEL *@
+            <div class="card shadow-sm border-0 rounded-0 @(selectedCategoryId == 0 ? "opacity-50" : "")">
+                <div class="card-header bg-dark text-white fw-bold rounded-0 text-uppercase">
+                    2. NHẬP CÂU HỎI TỪ EXCEL
+                </div>
+                <div class="card-body bg-light">
+                    <div class="mb-3">
+                        <button class="btn btn-outline-primary w-100" @onclick="DownloadTemplate" disabled="@(selectedCategoryId == 0)">
+                            <i class="oi oi-data-transfer-download me-2"></i> Tải File Template Mẫu
+                        </button>
+                    </div>
+                    <hr />
+                    <div class="mb-3">
+                        <InputFile OnChange="HandleFileSelected" class="form-control" accept=".xlsx" disabled="@(selectedCategoryId == 0)" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(importMessage))
+                    {
+                        <div class="alert @(isImportError ? "alert-danger" : "alert-success") p-2 small">
+                            @importMessage
+                        </div>
+                    }
+
+                    <button class="btn btn-danger w-100 fw-bold" @onclick="UploadExcel" disabled="@(selectedFile == null || isUploading || selectedCategoryId == 0)">
+                        @if (isUploading)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        IMPORT CÂU HỎI
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @* CỘT PHẢI: BẢNG DANH SÁCH CÂU HỎI *@
+        <div class="col-lg-8">
+            <div class="table-responsive bg-white shadow-sm p-3">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr class="border-bottom border-dark border-2">
+                            <th style="width: 65%;">Nội dung câu hỏi</th>
+                            <th class="text-center">Đáp án đúng</th>
+                            <th class="text-center" style="width: 120px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (selectedCategoryId == 0)
+                        {
+                            <tr><td colspan="3" class="text-center text-muted py-4">Vui lòng chọn chuyên mục.</td></tr>
+                        }
+                        else if (questions == null)
+                        {
+                            <tr><td colspan="3" class="text-center py-4"><div class="spinner-border text-danger spinner-border-sm"></div> Đang tải...</td></tr>
+                        }
+                        else if (!questions.Any())
+                        {
+                            <tr><td colspan="3" class="text-center text-muted py-4">Chưa có câu hỏi nào.</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var q in questions)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold mb-1" style="color: #2c3e50;">@q.Content</div>
+                                        <div class="small text-muted" style="font-size: 0.8rem;">
+                                            <span class="me-3"><strong class="@(q.CorrectAnswer == "A" ? "text-danger" : "")">A.</strong> @q.OptionA</span><br />
+                                            <span class="me-3"><strong class="@(q.CorrectAnswer == "B" ? "text-danger" : "")">B.</strong> @q.OptionB</span><br />
+                                            <span class="me-3"><strong class="@(q.CorrectAnswer == "C" ? "text-danger" : "")">C.</strong> @q.OptionC</span><br />
+                                            <span class="me-3"><strong class="@(q.CorrectAnswer == "D" ? "text-danger" : "")">D.</strong> @q.OptionD</span>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-danger fs-6 px-3 py-2">@q.CorrectAnswer</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @* Đã mở khóa 2 nút Sửa và Xóa *@
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => OpenEditModal(q)">
+                                            <i class="oi oi-pencil"></i> Sửa
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteQuestion(q.QuestionId)">
+                                            <i class="oi oi-trash"></i> Xóa
+                                        </button>
+                                    </td>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* MÀN HÌNH CHÌM (MODAL) ĐỂ SỬA CÂU HỎI *@
+@if (isEditing && editingQuestion != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1050;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white rounded-top">
+                    <h5 class="modal-title fw-bold text-uppercase">Sửa câu hỏi</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseEditModal"></button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nội dung câu hỏi</label>
+                        <textarea class="form-control" @bind="editingQuestion.Content" rows="3"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Đáp án A</label>
+                            <input type="text" class="form-control" @bind="editingQuestion.OptionA" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Đáp án B</label>
+                            <input type="text" class="form-control" @bind="editingQuestion.OptionB" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Đáp án C</label>
+                            <input type="text" class="form-control" @bind="editingQuestion.OptionC" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Đáp án D</label>
+                            <input type="text" class="form-control" @bind="editingQuestion.OptionD" />
+                        </div>
+                    </div>
+                    <div class="mb-3 w-50">
+                        <label class="form-label fw-bold text-danger">Đáp án đúng</label>
+                        <select class="form-select border-danger" @bind="editingQuestion.CorrectAnswer">
+                            <option value="A">Đáp án A</option>
+                            <option value="B">Đáp án B</option>
+                            <option value="C">Đáp án C</option>
+                            <option value="D">Đáp án D</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary px-4" @onclick="CloseEditModal">Hủy</button>
+                    <button type="button" class="btn btn-danger px-4 fw-bold" @onclick="SaveQuestion">Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CategoryDto>? categories;
+    private int selectedCategoryId = 0;
+    private List<QuestionDto>? questions;
+
+    // Biến cho Import
+    private IBrowserFile? selectedFile;
+    private bool isUploading = false;
+    private string importMessage = "";
+    private bool isImportError = false;
+
+    // Biến cho việc Sửa câu hỏi
+    private bool isEditing = false;
+    private QuestionDto? editingQuestion;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await CategoryService.GetAllAsync();
+    }
+
+    private async Task LoadQuestions()
+    {
+        if (selectedCategoryId > 0)
+        {
+            questions = null;
+            questions = await QuizService.GetQuestionsByCategoryAsync(selectedCategoryId);
+        }
+        else
+        {
+            questions = new List<QuestionDto>();
+        }
+    }
+
+    // --- CÁC HÀM THÊM MỚI CHO SỬA & XÓA ---
+
+    private void OpenEditModal(QuestionDto q)
+    {
+        // Clone dữ liệu ra một bản nháp để sửa, lỡ bấm Hủy thì dữ liệu cũ trên bảng không bị thay đổi
+        editingQuestion = new QuestionDto
+            {
+                QuestionId = q.QuestionId,
+                CategoryId = q.CategoryId,
+                Content = q.Content,
+                OptionA = q.OptionA,
+                OptionB = q.OptionB,
+                OptionC = q.OptionC,
+                OptionD = q.OptionD,
+                CorrectAnswer = q.CorrectAnswer
+            };
+        isEditing = true;
+    }
+
+    private void CloseEditModal()
+    {
+        isEditing = false;
+        editingQuestion = null;
+    }
+
+    private async Task SaveQuestion()
+    {
+        if (editingQuestion != null)
+        {
+            var success = await QuizService.UpdateQuestionAsync(editingQuestion.QuestionId, editingQuestion);
+            if (success)
+            {
+                await LoadQuestions(); // Tải lại bảng
+                CloseEditModal();
+                await JS.InvokeVoidAsync("alert", "Cập nhật câu hỏi thành công!");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Lỗi khi cập nhật câu hỏi.");
+            }
+        }
+    }
+
+    private async Task DeleteQuestion(int id)
+    {
+        // Bật hộp thoại cảnh báo của trình duyệt
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Bạn có chắc chắn muốn xóa vĩnh viễn câu hỏi này không?");
+        if (confirmed)
+        {
+            var success = await QuizService.DeleteQuestionAsync(id);
+            if (success)
+            {
+                await LoadQuestions(); // Tải lại bảng sau khi xóa
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Lỗi khi xóa câu hỏi.");
+            }
+        }
+    }
+
+    // --- GIỮ NGUYÊN CÁC HÀM IMPORT EXCEL ---
+    private async Task DownloadTemplate()
+    {
+        try
+        {
+            var fileBytes = await QuizService.DownloadTemplateAsync();
+            var fileName = "Template_NhapCauHoi.xlsx";
+            var fileStream = new DotNetStreamReference(new MemoryStream(fileBytes));
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, fileStream);
+        }
+        catch (Exception ex)
+        {
+            importMessage = "Lỗi khi tải template: " + ex.Message;
+            isImportError = true;
+        }
+    }
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        importMessage = "";
+    }
+
+    private async Task UploadExcel()
+    {
+        if (selectedFile == null || selectedCategoryId == 0) return;
+        isUploading = true;
+        importMessage = "";
+        isImportError = false;
+
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024));
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "file", selectedFile.Name);
+
+            var result = await QuizService.ImportExcelAsync(selectedCategoryId, content);
+
+            if (result == "Success")
+            {
+                importMessage = "Import câu hỏi thành công!";
+                selectedFile = null;
+                await LoadQuestions();
+            }
+            else
+            {
+                isImportError = true;
+                importMessage = result;
+            }
+        }
+        catch (Exception ex)
+        {
+            isImportError = true;
+            importMessage = "Lỗi kết nối: " + ex.Message;
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+}

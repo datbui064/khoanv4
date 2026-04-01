@@ -1,0 +1,339 @@
+﻿@page "/quiz"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@using System.Timers
+@implements IDisposable
+@inject CategoryService CategoryService
+@inject QuizService QuizService
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
+<PageTitle>Thi Trắc Nghiệm - Khoa NV3</PageTitle>
+
+<div class="container py-5" style="max-width: 800px;">
+
+    @* TRẠNG THÁI 1: MÀN HÌNH CHỜ (CHỌN ĐỀ THI) *@
+    @if (CurrentState == QuizState.Setup)
+    {
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="bg-dark text-white text-center py-4">
+                <h2 class="fw-bold mb-0">HỆ THỐNG KIỂM TRA KIẾN THỨC</h2>
+            </div>
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <img src="/Images/Logo_hoc_vien_ANND.png" alt="Logo" style="height: 100px;" class="mb-3" />
+                    <p class="text-muted fs-5">Hãy chọn bài thi để đánh giá năng lực của bạn.</p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Chọn chủ đề bài thi:</label>
+                    <select class="form-select form-select-lg border-danger" @bind="selectedCategoryId">
+                        <option value="0">🌍 Bài thi Tổng hợp (Trộn ngẫu nhiên mọi chuyên đề)</option>
+                        @if (categories != null)
+                        {
+                            @foreach (var cat in categories.Where(c => c.ParentId == null))
+                            {
+                                <option value="@cat.CategoryId">📚 @cat.CategoryName</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="alert alert-warning border-0 bg-light-warning">
+                    <i class="oi oi-info me-2 text-warning"></i>
+                    <strong>Nội quy:</strong> Bài thi gồm <strong>20 câu hỏi</strong>, thời gian làm bài là <strong>15 phút</strong>. Hết giờ hệ thống sẽ tự động thu bài.
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger">@errorMessage</div>
+                }
+
+                <button class="btn btn-danger btn-lg w-100 fw-bold py-3 mt-3 shadow" @onclick="StartQuiz" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        <h3>ĐANG CHUẨN BỊ ĐỀ...</h3>
+                    }
+                    else
+                    {
+                        <span><i class="oi oi-media-play me-2"></i> BẮT ĐẦU LÀM BÀI</span>
+                    }
+                </button>
+            </div>
+        </div>
+    }
+
+    @* TRẠNG THÁI 2: ĐANG LÀM BÀI THI *@
+    else if (CurrentState == QuizState.Playing && questions != null && questions.Any())
+    {
+        var currentQ = questions[currentQuestionIndex];
+
+        @* HEADER THANH TRẠNG THÁI *@
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-3 shadow-sm border-start border-danger border-4">
+            <h5 class="fw-bold m-0" style="color: #1a237e;">Câu hỏi @(currentQuestionIndex + 1) / @questions.Count</h5>
+            <div class="fw-bold fs-4 @(timeLeftSeconds <= 60 ? "text-danger animate-blink" : "text-dark")">
+                <i class="oi oi-clock me-1"></i> @GetFormattedTime()
+            </div>
+        </div>
+
+        @* NỘI DUNG CÂU HỎI *@
+        <div class="card shadow border-0 rounded-4 mb-4">
+            <div class="card-body p-4 p-md-5">
+                <h4 class="fw-bold lh-base mb-4 text-dark">@currentQ.Content</h4>
+
+                <div class="d-flex flex-column gap-3">
+                    <button class="btn @GetOptionClass(currentQ.QuestionId, "A") text-start p-3 fw-semibold fs-5 rounded-3" @onclick='() => SelectAnswer(currentQ.QuestionId, "A")'>
+                        <span class="badge bg-white text-dark me-2">A</span> @currentQ.OptionA
+                    </button>
+                    <button class="btn @GetOptionClass(currentQ.QuestionId, "B") text-start p-3 fw-semibold fs-5 rounded-3" @onclick='() => SelectAnswer(currentQ.QuestionId, "B")'>
+                        <span class="badge bg-white text-dark me-2">B</span> @currentQ.OptionB
+                    </button>
+                    <button class="btn @GetOptionClass(currentQ.QuestionId, "C") text-start p-3 fw-semibold fs-5 rounded-3" @onclick='() => SelectAnswer(currentQ.QuestionId, "C")'>
+                        <span class="badge bg-white text-dark me-2">C</span> @currentQ.OptionC
+                    </button>
+                    <button class="btn @GetOptionClass(currentQ.QuestionId, "D") text-start p-3 fw-semibold fs-5 rounded-3" @onclick='() => SelectAnswer(currentQ.QuestionId, "D")'>
+                        <span class="badge bg-white text-dark me-2">D</span> @currentQ.OptionD
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @* THANH ĐIỀU HƯỚNG *@
+        <div class="d-flex justify-content-between">
+            <button class="btn btn-secondary px-4 fw-bold" @onclick="PrevQuestion" disabled="@(currentQuestionIndex == 0)">
+                <i class="oi oi-arrow-thick-left me-1"></i> Câu trước
+            </button>
+
+            @if (currentQuestionIndex < questions.Count - 1)
+            {
+                <button class="btn btn-primary px-4 fw-bold" @onclick="NextQuestion">
+                    Câu tiếp theo <i class="oi oi-arrow-thick-right ms-1"></i>
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-danger px-5 fw-bold shadow" @onclick="SubmitQuiz" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    NỘP BÀI NGAY
+                </button>
+            }
+        </div>
+    }
+
+    @* TRẠNG THÁI 3: KẾT QUẢ BÀI THI *@
+    else if (CurrentState == QuizState.Finished && result != null)
+    {
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden text-center">
+            <div class="bg-success text-white py-4">
+                <i class="oi oi-circle-check" style="font-size: 4rem;"></i>
+                <h2 class="fw-bold mt-2">HOÀN THÀNH BÀI THI</h2>
+            </div>
+            <div class="card-body p-5">
+                <h4 class="text-muted mb-4">Điểm số của bạn:</h4>
+                <div class="display-1 fw-bold text-danger mb-4">
+                    @result.CorrectAnswers <span class="text-muted fs-3">/ @result.TotalQuestions</span>
+                </div>
+
+                <h5 class="mb-5" style="color: #2c3e50;">
+                    @if (result.CorrectAnswers == result.TotalQuestions)
+                    {
+                        <span>🏆 Xuất sắc! Bạn nắm kiến thức tuyệt đối!</span>
+                    }
+                    else if (result.CorrectAnswers >= result.TotalQuestions * 0.7)
+                    {
+                        <span>👍 Rất tốt! Kiến thức của bạn khá vững.</span>
+                    }
+                    else
+                    {
+                        <span>📚 Cần cố gắng hơn! Hãy ôn tập lại tài liệu nhé.</span>
+                    }
+                </h5>
+
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn btn-outline-secondary px-4 fw-bold" @onclick="ResetQuiz">THI LẠI</button>
+                    <a href="/" class="btn btn-danger px-4 fw-bold">VỀ TRANG CHỦ</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .bg-light-warning { background-color: #fff8e1; }
+
+    /* Hiệu ứng nhấp nháy cho đồng hồ khi sắp hết giờ */
+    .animate-blink {
+        animation: blinker 1s linear infinite;
+    }
+    @@keyframes blinker {
+        50% { opacity: 0; }
+    }
+
+    /* Đổi màu nút Đáp án khi được chọn */
+    .btn-outline-dark:hover { background-color: #f8f9fa; color: #000; }
+    .btn-selected {
+        background-color: #e3f2fd;
+        border: 2px solid #0d6efd !important;
+        color: #0d6efd;
+    }
+</style>
+
+@code {
+    private enum QuizState { Setup, Playing, Finished }
+    private QuizState CurrentState = QuizState.Setup;
+
+    private List<CategoryDto>? categories;
+    private int selectedCategoryId = 0;
+
+    private List<QuestionDto>? questions;
+    private int currentQuestionIndex = 0;
+    private Dictionary<int, string> userAnswers = new(); // Lưu đáp án: [QuestionId] -> "A/B/C/D"
+
+    private string errorMessage = "";
+    private bool isLoading = false;
+    private bool isSubmitting = false;
+
+    private QuizResultDto? result;
+
+    // --- LOGIC ĐỒNG HỒ ĐẾM NGƯỢC ---
+    private Timer? timer;
+    private int timeLeftSeconds = 15 * 60; // 15 phút
+
+    protected override async Task OnInitializedAsync()
+    {
+        categories = await CategoryService.GetAllAsync();
+    }
+
+    private async Task StartQuiz()
+    {
+        isLoading = true;
+        errorMessage = "";
+
+        try
+        {
+            questions = await QuizService.GetRandomQuestionsAsync(selectedCategoryId);
+
+            if (questions != null && questions.Any())
+            {
+                // Reset trạng thái
+                userAnswers.Clear();
+                currentQuestionIndex = 0;
+                timeLeftSeconds = 15 * 60; // Set lại 15 phút
+
+                CurrentState = QuizState.Playing;
+
+                // Khởi động đồng hồ
+                timer = new Timer(1000); // Mỗi 1 giây
+                timer.Elapsed += CountDownTimer;
+                timer.Start();
+            }
+            else
+            {
+                errorMessage = "Chuyên đề này hiện chưa có câu hỏi nào. Vui lòng chọn chuyên đề khác.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "Lỗi khi lấy đề thi: " + ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Hàm đếm ngược thời gian
+    private void CountDownTimer(Object? source, ElapsedEventArgs e)
+    {
+        if (timeLeftSeconds > 0)
+        {
+            timeLeftSeconds--;
+            InvokeAsync(StateHasChanged); // Cập nhật lại giao diện
+        }
+        else
+        {
+            // HẾT GIỜ! Tự động nộp bài
+            timer?.Stop();
+            InvokeAsync(SubmitQuiz);
+        }
+    }
+
+    // Định dạng giây thành phút:giây (VD: 14:05)
+    private string GetFormattedTime()
+    {
+        int minutes = timeLeftSeconds / 60;
+        int seconds = timeLeftSeconds % 60;
+        return $"{minutes:D2}:{seconds:D2}";
+    }
+
+    // --- LOGIC TRẢ LỜI CÂU HỎI ---
+    private void SelectAnswer(int questionId, string option)
+    {
+        userAnswers[questionId] = option; // Lưu hoặc ghi đè đáp án
+    }
+
+    private string GetOptionClass(int questionId, string option)
+    {
+        // Trả về class CSS nếu đáp án này đang được chọn
+        if (userAnswers.ContainsKey(questionId) && userAnswers[questionId] == option)
+        {
+            return "btn-selected";
+        }
+        return "btn-outline-dark border-1 text-dark"; // Mặc định chưa chọn
+    }
+
+    private void NextQuestion()
+    {
+        if (currentQuestionIndex < questions!.Count - 1) currentQuestionIndex++;
+    }
+
+    private void PrevQuestion()
+    {
+        if (currentQuestionIndex > 0) currentQuestionIndex--;
+    }
+
+    // --- LOGIC NỘP BÀI ---
+    private async Task SubmitQuiz()
+    {
+        isSubmitting = true;
+        timer?.Stop();
+
+        try
+        {
+            // Lấy ID người dùng đang đăng nhập
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var idClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier) ?? user.FindFirst("sub");
+            int accId = idClaim != null ? int.Parse(idClaim.Value) : 0;
+
+            var request = new SubmitQuizRequest
+                {
+                    AccountId = accId,
+                    CategoryId = selectedCategoryId,
+                    Answers = userAnswers
+                };
+
+            result = await QuizService.SubmitQuizAsync(request);
+            if (result != null) CurrentState = QuizState.Finished;
+        }
+        catch (Exception)
+        {
+            await JS.InvokeVoidAsync("alert", "Lỗi nộp bài.");
+        }
+        finally { isSubmitting = false; }
+    }
+
+    private void ResetQuiz()
+    {
+        CurrentState = QuizState.Setup;
+    }
+
+    // Xóa bộ nhớ đồng hồ khi người dùng rời khỏi trang
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+}

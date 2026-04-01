@@ -1,0 +1,229 @@
+﻿@page "/admin/categories"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject CategoryService categoryService
+@inject PhotoUploadService PhotoUploadService
+
+<PageTitle>Quản lý Chuyên mục - Admin</PageTitle>
+
+<div class="container py-4">
+    <h2 class="fw-bold mb-4 border-start border-danger border-4 ps-2">QUẢN LÝ CHUYÊN MỤC</h2>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 80px;">
+                <div class="card-header bg-dark text-white fw-bold">
+                    @(isEditing ? "SỬA CHUYÊN MỤC" : "THÊM MỚI CHUYÊN MỤC")
+                </div>
+                <div class="card-body">
+                    <EditForm Model="currentCategory" OnValidSubmit="SaveCategory">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tên chuyên mục</label>
+                            <InputText @bind-Value="currentCategory.CategoryName" class="form-control" placeholder="Nhập tên..." />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Chuyên mục Cha</label>
+                            <select class="form-select" @bind="currentCategory.ParentId">
+                                <option value="">-- Không có (Làm chuyên mục gốc) --</option>
+                                @if (categories != null)
+                                {
+                                    // Chỉ hiển thị các chuyên mục gốc để làm Cha (tránh chọn chính nó làm cha của nó)
+                                    @foreach (var cat in categories.Where(c => c.ParentId == null && c.CategoryId != currentCategory.CategoryId))
+                                    {
+                                        <option value="@cat.CategoryId">@cat.CategoryName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Đường dẫn (Slug)</label>
+                            <InputText @bind-Value="currentCategory.Slug" class="form-control" placeholder="vi-du-chuyen-muc" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ảnh đại diện</label>
+                            <InputFile OnChange="HandleFileSelected" class="form-control" accept="image/*" />
+
+                            @if (isUploading)
+                            {
+                                <div class="mt-2 text-primary small"><i class="spinner-border spinner-border-sm"></i> Đang tải ảnh lên...</div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(currentCategory.ImageUrl))
+                            {
+                                <img src="@currentCategory.ImageUrl" class="img-thumbnail mt-3" style="max-height: 150px; object-fit: cover;" />
+                            }
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger w-100 fw-bold" disabled="@isUploading">
+                                <i class="oi oi-check"></i> LƯU
+                            </button>
+                            @if (isEditing)
+                            {
+                                <button type="button" class="btn btn-secondary w-100 fw-bold" @onclick="ResetForm">
+                                    HỦY
+                                </button>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-0 table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Tên chuyên mục</th>
+                                <th>Slug</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (categories == null)
+                            {
+                                <tr><td colspan="4" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                            }
+                            else if (!categories.Any())
+                            {
+                                <tr><td colspan="4" class="text-center py-4">Chưa có chuyên mục nào.</td></tr>
+                            }
+                            else
+                            {
+                                @* BƯỚC 1: LỌC VÀ IN RA CÁC CHUYÊN MỤC CHA (GỐC) *@
+                                @foreach (var parent in categories.Where(c => c.ParentId == null))
+                                {
+                                    <tr class="table-light">
+                                        <td style="width: 100px;">
+                                            <img src="@(string.IsNullOrEmpty(parent.ImageUrl) ? "Images/Logo_hoc_vien_ANND.png" : parent.ImageUrl)"
+                                                 class="rounded" style="width: 80px; height: 50px; object-fit: cover;" />
+                                        </td>
+                                        <td class="fw-bold text-danger text-uppercase">@parent.CategoryName</td>
+                                        <td class="text-muted small">@parent.Slug</td>
+                                        <td class="text-end">
+                                            <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => EditCategory(parent)">
+                                                <i class="oi oi-pencil"></i> Sửa
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategory(parent.CategoryId)">
+                                                <i class="oi oi-trash"></i> Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    @* BƯỚC 2: TÌM VÀ IN RA CÁC CHUYÊN MỤC CON CỦA ÔNG CHA NÀY *@
+                                    @foreach (var child in categories.Where(c => c.ParentId == parent.CategoryId))
+                                    {
+                                        <tr>
+                                            <td style="width: 100px;">
+                                                <img src="@(string.IsNullOrEmpty(child.ImageUrl) ? "Images/Logo_hoc_vien_ANND.png" : child.ImageUrl)"
+                                                     class="rounded ms-3" style="width: 60px; height: 40px; object-fit: cover;" />
+                                            </td>
+                                            <td class="fw-bold">
+                                                <span class="text-muted ms-3 me-2">↳</span> @child.CategoryName
+                                            </td>
+                                            <td class="text-muted small">@child.Slug</td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => EditCategory(child)">
+                                                    <i class="oi oi-pencil"></i> Sửa
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteCategory(child.CategoryId)">
+                                                    <i class="oi oi-trash"></i> Xóa
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<CategoryDto>? categories;
+    private CategoryDto currentCategory = new CategoryDto();
+    private bool isEditing = false;
+    private bool isUploading = false;
+    private IBrowserFile? selectedFile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        categories = await categoryService.GetAllAsync();
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        isUploading = true;
+        StateHasChanged();
+
+        var uploadedUrl = await PhotoUploadService.UploadPhotoAsync(selectedFile);
+
+        if (!string.IsNullOrEmpty(uploadedUrl))
+        {
+            currentCategory.ImageUrl = uploadedUrl;
+        }
+
+        isUploading = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveCategory()
+    {
+        if (isEditing)
+        {
+            await categoryService.UpdateAsync(currentCategory.CategoryId, currentCategory);
+        }
+        else
+        {
+            await categoryService.CreateAsync(currentCategory);
+        }
+
+        await LoadCategories();
+        ResetForm();
+    }
+
+    private void EditCategory(CategoryDto cat)
+    {
+        isEditing = true;
+        currentCategory = new CategoryDto
+            {
+                CategoryId = cat.CategoryId,
+                CategoryName = cat.CategoryName,
+                Slug = cat.Slug,
+                ParentId = cat.ParentId,
+                ImageUrl = cat.ImageUrl
+            };
+    }
+
+    private async Task DeleteCategory(int id)
+    {
+        await categoryService.DeleteAsync(id);
+        await LoadCategories();
+    }
+
+    private void ResetForm()
+    {
+        isEditing = false;
+        currentCategory = new CategoryDto();
+        selectedFile = null;
+    }
+}

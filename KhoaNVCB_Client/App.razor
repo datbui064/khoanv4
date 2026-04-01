@@ -1,0 +1,22 @@
+﻿<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <div class="container mt-5 text-center">
+                        <h3 class="text-danger">CẢNH BÁO AN NINH</h3>
+                        <p>Khu vực dành riêng cho Quản trị viên. Bạn không có quyền truy cập!</p>
+                        <a href="/login" class="btn btn-primary mt-3">Quay lại Đăng nhập</a>
+                    </div>
+                </NotAuthorized>
+            </AuthorizeRouteView>
+            <FocusOnNavigate RouteData="@routeData" Selector="h1" />
+        </Found>
+        <NotFound>
+            <PageTitle>Không tìm thấy</PageTitle>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <p role="alert">Trang này không tồn tại.</p>
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>

@@ -1,0 +1,303 @@
+﻿@inherits LayoutComponentBase
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@inject CategoryService CategoryService
+@inject AuthService AuthService
+@inject NavigationManager Nav
+
+<div class="d-flex flex-column min-vh-100 bg-light w-100 p-0 m-0" style="overflow-x: hidden;">
+    <header class="bg-white shadow-sm sticky-top border-bottom border-danger border-2 w-100">
+        <div class="container d-flex justify-content-between align-items-center py-2">
+            
+            @* --- KHỐI LOGO VÀ NÚT BẤM TRÊN MOBILE --- *@
+            <div class="d-flex align-items-center w-100 justify-content-between">
+
+                @* 1. Logo và Tên Khoa (Căn trái) *@
+                <a href="/" class="text-decoration-none d-flex align-items-center flex-grow-1" @onclick="CloseMobileMenu">
+                    <img src="/Images/z7665822851758_6d1425400f457ecfa8a38f073cc4e04c.jpg" alt="Logo NV3" class="flex-shrink-0" style="height: 45px; margin-right: 10px; object-fit: contain;" />
+                    <span class="fw-bold text-uppercase d-none d-sm-inline" style="color: #b71c1c; font-size: 1.3rem;">KHOA AN NINH NỘI ĐỊA</span>
+                    <span class="fw-bold text-uppercase d-sm-none" style="color: #b71c1c; font-size: 1.1rem;">KHOA ANNĐ</span>
+                </a>
+
+                @* 2. Nút Hamburger SVG (Căn phải - Chỉ hiện trên Mobile) *@
+                <button class="btn btn-outline-danger d-md-none" @onclick="ToggleMobileMenu" style="padding: 4px 8px; border-width: 2px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                </button>
+
+            </div>
+
+            @* --- KHỐI THANH ĐIỀU HƯỚNG (NAV) --- *@
+            <nav class="@(isMobileMenuOpen ? "mobile-menu-open" : "d-none") d-md-flex gap-4 align-items-center">
+                <a href="/" class="nav-link-custom text-uppercase" @onclick="CloseMobileMenu">Trang chủ</a>
+                <a href="#" class="nav-link-custom text-uppercase" @onclick="CloseMobileMenu">Giới thiệu</a>
+
+                <div class="dropdown dropdown-hover position-relative">
+                    <a href="#" class="nav-link-custom text-uppercase d-flex align-items-center pb-2 mb-n2">
+                        Chuyên đề <i class="oi oi-chevron-bottom ms-1 mt-1" style="font-size: 0.7em;"></i>
+                    </a>
+
+                    <ul class="dropdown-menu shadow-lg border-0 rounded-2 mt-0 position-absolute custom-dropdown">
+                        @if (categories == null)
+                        {
+                            <li><span class="dropdown-item text-muted py-2">Đang tải...</span></li>
+                        }
+                        else
+                        {
+                            @foreach (var cat in categories.Where(c => c.ParentId == null))
+                            {
+                                var children = categories.Where(c => c.ParentId == cat.CategoryId).ToList();
+
+                                if (children.Any())
+                                {
+                                    <li class="dropdown-submenu position-relative">
+                                        <a class="dropdown-item py-2 px-3 dropdown-item-custom d-flex justify-content-between align-items-center" href="/category/@cat.CategoryId" @onclick="CloseMobileMenu">
+                                            @cat.CategoryName
+                                            <i class="oi oi-chevron-right text-muted" style="font-size: 0.7em;"></i>
+                                        </a>
+                                        <ul class="dropdown-menu shadow-lg border-0 rounded-2 position-absolute custom-dropdown-sub">
+                                            @foreach (var child in children)
+                                            {
+                                                <li>
+                                                    <a class="dropdown-item py-2 px-3 dropdown-item-custom" href="/category/@child.CategoryId" @onclick="CloseMobileMenu">
+                                                        @child.CategoryName
+                                                    </a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                                else
+                                {
+                                    <li>
+                                        <a class="dropdown-item py-2 px-3 dropdown-item-custom" href="/category/@cat.CategoryId" @onclick="CloseMobileMenu">
+                                            @cat.CategoryName
+                                        </a>
+                                    </li>
+                                }
+                            }
+                        }
+                    </ul>
+                </div>
+
+                <AuthorizeView>
+                    <Authorized>
+                        <AuthorizeView Roles="Admin" Context="adminContext">
+                            <Authorized>
+                                <a href="/admin/posts" class="nav-link-custom text-uppercase text-primary me-3" @onclick="CloseMobileMenu">
+                                    <i class="oi oi-pencil me-1 small"></i> QUẢN LÝ BÀI VIẾT
+                                </a>
+                                <a href="/admin/categories" class="nav-link-custom text-uppercase fw-bold me-3" style="color: #1a237e;" @onclick="CloseMobileMenu">
+                                    <i class="oi oi-list-rich me-1"></i> QUẢN LÝ CHUYÊN MỤC
+                                </a>
+                                <a href="/admin/quizzes" class="nav-link-custom text-uppercase fw-bold me-3" style="color: #1a237e;" @onclick="CloseMobileMenu">
+                                    <i class="oi oi-list-rich me-1"></i> QUẢN LÝ CÂU HỎI
+                                </a>
+                                <a href="/admin/quiz-history" class="nav-link-custom text-uppercase fw-bold me-3" style="color: #1a237e;" @onclick="CloseMobileMenu">
+                                    <i class="oi oi-list-rich me-1"></i> LỊCH SỬ THI
+                                </a>
+                            </Authorized>
+                        </AuthorizeView>
+
+                        <a href="javascript:void(0)" @onclick="HandleLogout" class="nav-link-custom text-uppercase text-danger">
+                            <i class="oi oi-account-logout me-1 small"></i> Đăng xuất
+                        </a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/login" class="nav-link-custom text-uppercase text-secondary" @onclick="CloseMobileMenu">
+                            <i class="oi oi-lock-locked me-1 small"></i> Quản trị
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+                @* CHỈ NGƯỜI ĐÃ ĐĂNG NHẬP MỚI THẤY NÚT NÀY *@
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="/quiz" class="btn btn-warning fw-bold text-dark shadow-sm me-3" style="border-radius: 20px;">
+                            <i class="oi oi-task me-1"></i> THI TRẮC NGHIỆM
+                        </a>
+                    </Authorized>
+                </AuthorizeView>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow-1 w-100">
+        @Body
+    </main>
+
+    <footer class="bg-dark text-white py-5 mt-auto w-100">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <h5 class="fw-bold text-uppercase border-start border-danger border-4 ps-2 mb-3">Blog Khoa An ninh nội địa</h5>
+                    <p class="text-muted small">Cổng thông tin nghiên cứu về Phản động, Tôn giáo, Dân tộc, Chống khủng bố và An ninh phi truyền thống.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-1"><i class="oi oi-envelope-closed me-2"></i>nvcbblog@gmail.com</p>
+                </div>
+            </div>
+            <hr class="border-secondary my-4" />
+            <div class="text-center text-muted small">
+                &copy; @DateTime.Now.Year - Bản quyền thuộc về Khoa An ninh nội địa.
+            </div>
+        </div>
+    </footer>
+</div>
+
+@code {
+    private List<CategoryDto>? categories;
+    
+    // --- BIẾN TRẠNG THÁI MENU MOBILE ---
+    private bool isMobileMenuOpen = false;
+
+    private void ToggleMobileMenu()
+    {
+        isMobileMenuOpen = !isMobileMenuOpen;
+    }
+
+    private void CloseMobileMenu()
+    {
+        isMobileMenuOpen = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categories = await CategoryService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi tải danh mục: {ex.Message}");
+            categories = new List<CategoryDto>();
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        isMobileMenuOpen = false; // Đóng menu nếu đang mở
+        Nav.NavigateTo("/", forceLoad: true);
+    }
+}
+
+<style>
+    .nav-link-custom {
+        text-decoration: none;
+        color: #333;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: color 0.3s ease;
+        padding: 5px 0;
+        border-bottom: 2px solid transparent;
+    }
+
+    .nav-link-custom:hover {
+        color: #dc3545;
+        border-bottom: 2px solid #dc3545;
+    }
+
+    .sticky-top {
+        z-index: 1020;
+    }
+
+    .dropdown-hover:hover > .dropdown-menu {
+        display: block;
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .custom-dropdown {
+        min-width: 250px;
+        top: 100%;
+        left: 0;
+    }
+
+    .dropdown-item-custom {
+        white-space: normal;
+        font-size: 0.95rem;
+        color: #2c3e50;
+        border-bottom: 1px solid #f8f9fa;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item-custom:last-child {
+        border-bottom: none;
+    }
+
+    .dropdown-item-custom:hover {
+        background-color: #f8f9fa;
+        color: #dc3545;
+        padding-left: 1.2rem !important;
+    }
+
+    /* ĐÃ SỬA LỖI THIẾU DẤU  Ở ĐÂY */
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .dropdown-submenu > .custom-dropdown-sub {
+        position: static !important;
+        float: none;
+        box-shadow: none !important;
+        padding-left: 1.2rem;
+        margin-top: 0;
+        background-color: #f8f9fa;
+        display: none;
+        border: none;
+    }
+
+    .dropdown-submenu:hover > .custom-dropdown-sub {
+        display: block;
+        animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .dropdown-submenu > a > i.oi-chevron-right {
+        transition: transform 0.2s ease;
+    }
+
+    .dropdown-submenu:hover > a > i.oi-chevron-right {
+        transform: rotate(90deg);
+    }
+
+    /* --- GIAO DIỆN MOBILE TÙY CHỈNH THEO PPT --- */
+    @@media (max-width: 768px) {
+        .mobile-menu-open {
+            display: flex !important;
+            flex-direction: column;
+            position: absolute;
+            top: 100%; /* Đẩy xuống ngay dưới Header */
+            left: 0;
+            width: 100%;
+            background-color: white;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1050;
+            gap: 15px !important;
+            align-items: flex-start !important; /* Canh lề trái cho Menu */
+            border-top: 1px solid #eee;
+        }
+
+        .custom-dropdown {
+            position: static !important;
+            width: 100%;
+            box-shadow: none !important;
+            border-left: 3px solid #dc3545 !important; /* Tạo điểm nhấn màu đỏ bên trái chuyên mục */
+            border-radius: 0;
+            margin-top: 10px !important;
+            padding-left: 10px;
+        }
+
+        .dropdown-item-custom {
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+    }
+</style>

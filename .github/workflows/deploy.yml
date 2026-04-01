@@ -1,0 +1,29 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ] # Hoặc master tùy tên nhánh của Duy
+permissions:
+  contents: write
+jobs:
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Publish app
+      run: dotnet publish KhoaNVCB_Client/KhoaNVCB_Client.csproj -c Release -o release --nologo
+
+    - name: Change base-tag (Nếu Repo không phải là username.github.io)
+      run: sed -i 's/<base href="\/" \/>/<base href="\/KhoaNVCB_Client\/" \/>/g' release/wwwroot/index.html
+
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages
+        folder: release/wwwroot

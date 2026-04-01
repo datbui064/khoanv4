@@ -1,0 +1,161 @@
+﻿@page "/category/{id:int}"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@inject CategoryService CategoryService
+
+<PageTitle>@(category?.CategoryName ?? "Chuyên mục") - Khoa NV3</PageTitle>
+
+<div class="container py-5">
+    @if (isLoading)
+    {
+        <div class="text-center py-5"><div class="spinner-border text-danger" role="status"></div></div>
+    }
+    else if (category == null)
+    {
+        <div class="alert alert-warning text-center">Không tìm thấy chuyên mục này.</div>
+    }
+    else
+    {
+        <div class="text-center mb-5 mx-auto" style="max-width: 800px;">
+            <h2 class="fw-bold text-uppercase mb-3" style="color: #1a237e;">CHUYÊN MỤC @category.CategoryName</h2>
+            <p class="text-muted" style="line-height: 1.8;">
+                Cập nhật thông tin, hoạt động và các nội dung liên quan đến công tác bảo đảm an ninh trên lĩnh vực @category.CategoryName.ToLower(); góp phần giữ vững ổn định chính trị, củng cố khối đại đoàn kết các dân tộc và bảo đảm trật tự an toàn xã hội.
+            </p>
+        </div>
+
+        @if (subCategories != null && subCategories.Any())
+        {
+            <div class="row justify-content-center g-4 max-w-1000 mx-auto">
+                @foreach (var sub in subCategories)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <div class="category-card rounded-4 shadow-sm overflow-hidden position-relative" style="height: 220px;">
+                            <img src="@(string.IsNullOrEmpty(sub.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : sub.ImageUrl)"
+                                 class="w-100 h-100" style="object-fit: cover;"
+                                 alt="@sub.CategoryName" />
+
+                            <div class="overlay position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0,0,0,0.5); transition: background 0.3s ease;"></div>
+
+                            <div class="position-absolute top-50 start-50 translate-middle w-100 text-center" style="z-index: 2;">
+                                <a href="/category/@sub.CategoryId" class="text-decoration-none stretched-link text-white fw-bold text-uppercase fs-5 category-title">
+                                    @sub.CategoryName
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="row justify-content-center g-4 max-w-1000 mx-auto">
+                <div class="col-md-5">
+                    <div class="card h-100 shadow-sm border-0 rounded-4 text-center p-4 p-lg-5 portal-card">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <i class="oi oi-document text-secondary mb-3" style="font-size: 3rem;"></i>
+                            <h3 class="fw-bold mb-3" style="color: #1a237e;">Tin Tức</h3>
+                            <p class="text-muted mb-4 small">
+                                Cập nhật các tin tức, hoạt động và kết quả công tác liên quan đến bảo đảm an ninh trên lĩnh vực @category.CategoryName.ToLower().
+                            </p>
+                            <a href="/category/@id/articles" class="btn btn-primary btn-lg mt-auto rounded-3 px-4 fw-bold shadow-sm" style="background-color: #1a237e; border: none;">
+                                Xem tin tức
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card h-100 shadow-sm border-0 rounded-4 text-center p-4 p-lg-5 portal-card">
+                        <div class="card-body d-flex flex-column align-items-center">
+                            <i class="oi oi-video text-secondary mb-3" style="font-size: 3rem;"></i>
+                            <h3 class="fw-bold mb-3" style="color: #1a237e;">Video</h3>
+                            <p class="text-muted mb-4 small">
+                                Các video phóng sự, ghi nhận hoạt động thực tiễn và công tác bảo đảm an ninh trên lĩnh vực @category.CategoryName.ToLower() tại cơ sở.
+                            </p>
+                            <a href="/category/@id/videos" class="btn btn-danger btn-lg mt-auto rounded-3 px-4 fw-bold shadow-sm" style="background-color: #d32f2f; border: none;">
+                                Xem video
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<style>
+    .portal-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background-color: #ffffff;
+    }
+
+        .portal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 1rem 3rem rgba(0,0,0,.15) !important;
+        }
+
+    .max-w-1000 {
+        max-width: 1000px;
+    }
+    /* Hiệu ứng thẻ chuyên mục con */
+    .category-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 1rem 3rem rgba(0,0,0,.15) !important;
+        }
+
+            .category-card:hover .overlay {
+                background: rgba(0,0,0,0.3) !important; /* Sáng lên khi hover */
+            }
+
+    .category-title {
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
+        transition: color 0.2s ease;
+        padding: 0 15px;
+    }
+
+    .category-card:hover .category-title {
+        color: #ffc107 !important; /* Đổi sang màu vàng kim */
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private CategoryDto? category;
+    private List<CategoryDto> subCategories = new(); // Biến chứa danh sách mục con
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategory();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadCategory();
+    }
+
+    private async Task LoadCategory()
+    {
+        isLoading = true;
+        var allCats = await CategoryService.GetAllAsync();
+
+        // 1. Tìm thông tin chuyên mục hiện tại
+        category = allCats.FirstOrDefault(c => c.CategoryId == id);
+
+        // 2. Tìm tất cả các chuyên mục con có ParentId bằng ID hiện tại
+        if (category != null)
+        {
+            subCategories = allCats.Where(c => c.ParentId == category.CategoryId).ToList();
+        }
+
+        isLoading = false;
+    }
+}

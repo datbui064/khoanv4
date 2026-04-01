@@ -1,0 +1,70 @@
+﻿@page "/login"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous] 
+@inject AuthService AuthService
+@inject NavigationManager Nav
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4 shadow-sm p-4 bg-white rounded">
+            <h3 class="text-center mb-4">ĐĂNG NHẬP HỆ THỐNG</h3>
+
+            <div class="mb-3">
+                <label class="form-label">Tên đăng nhập</label>
+                <input class="form-control" @bind="loginModel.Username" placeholder="Nhập admin..." />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Mật khẩu</label>
+                <input type="password" class="form-control" @bind="loginModel.Password" placeholder="Nhập 123..." />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger py-2">@errorMessage</div>
+            }
+
+            <button class="btn btn-primary w-100" @onclick="HandleLogin" disabled="@isProcessing">
+                @(isProcessing ? "Đang xử lý..." : "Đăng nhập")
+            </button>
+            <div class="text-center text-muted small mt-3">
+                Chưa có tài khoản? <a href="/register" class="text-primary text-decoration-none fw-bold">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? returnUrl { get; set; }
+    private LoginDto loginModel = new();
+    private string? errorMessage;
+    private bool isProcessing = false;
+
+    private async Task HandleLogin()
+    {
+        isProcessing = true;
+        errorMessage = null;
+
+        var success = await AuthService.Login(loginModel);
+        if (success)
+        {
+            // NẾU CÓ returnUrl THÌ QUAY LẠI ĐÓ, KHÔNG THÌ MỚI VỀ TRANG CHỦ
+            if (!string.IsNullOrEmpty(returnUrl))
+            {
+                Nav.NavigateTo(returnUrl);
+            }
+            else
+            {
+                Nav.NavigateTo("/");
+            }
+        }
+        else
+        {
+            errorMessage = "Sai tài khoản hoặc mật khẩu";
+        }
+        isProcessing = false;
+    }
+}

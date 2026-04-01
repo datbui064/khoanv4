@@ -1,0 +1,207 @@
+﻿@page "/category/{id:int}/{type}"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+@inject PostService PostService
+@inject CategoryService CategoryService
+
+<PageTitle>@(currentCategory?.CategoryName ?? "Chuyên mục") - Khoa NV3</PageTitle>
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 col-xl-9 mb-5">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <h4 class="fw-bold text-uppercase m-0 text-dark border-start border-danger border-4 ps-2">
+                    @(type == "videos" ? "Video" : "Tin tức") - @(currentCategory?.CategoryName ?? "Đang tải...")
+                </h4>
+            </div>
+
+            @if (isLoading)
+            {
+                <div class="text-center py-5"><div class="spinner-border text-danger" role="status"></div></div>
+            }
+            else if (filteredPosts == null || !filteredPosts.Any())
+            {
+                <div class="alert alert-light border shadow-sm text-center py-5 rounded-3">
+                    <i class="oi oi-info fs-1 text-muted mb-3 d-block"></i>
+                    Hiện chưa có @(type == "videos" ? "video" : "tin bài") nào trong chuyên mục này.
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var post in filteredPosts)
+                    {
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-0 card-hover bg-transparent">
+                                <div class="position-relative rounded-3 overflow-hidden shadow-sm">
+                                    <img src="@(string.IsNullOrEmpty(post.OriginalUrl) ? "images/Logo_hoc_vien_ANND.png" : post.OriginalUrl)"
+                                         class="w-100 object-fit-cover" alt="@post.Title" style="height: 220px;" />
+
+                                    @if (post.SourceType == "Video" || type == "videos")
+                                    {
+                                        <div class="position-absolute top-50 start-50 translate-middle">
+                                            <i class="oi oi-media-play text-white" style="font-size: 3.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.5);"></i>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="card-body px-0 pt-3 pb-0">
+                                    <a href="/post/@post.PostId" class="text-decoration-none stretched-link">
+                                        <h5 class="fw-bold text-dark hover-danger text-truncate-2" style="line-height: 1.4;">@post.Title</h5>
+                                    </a>
+                                    <p class="text-muted small mt-2 text-truncate-2 mb-0">@post.Summary</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-4 col-xl-3">
+            <div class="sidebar-box p-4 rounded-3 shadow-sm bg-white border">
+                <h6 class="fw-bold text-uppercase mb-4" style="color: #1a237e;">CHUYÊN MỤC BÀI VIẾT</h6>
+                <ul class="list-unstyled mb-0">
+                    @if (categories != null)
+                    {
+                        @* 1. CHỈ LỌC CÁC CHUYÊN MỤC CHA (GỐC) ĐỂ HIỂN THỊ TRƯỚC *@
+                        foreach (var parent in categories.Where(c => c.ParentId == null))
+                        {
+                            // Lấy danh sách các chuyên mục con thuộc về ông cha này
+                            var children = categories.Where(c => c.ParentId == parent.CategoryId).ToList();
+
+                            <li class="mb-3 border-bottom pb-2">
+                                @* GIAO DIỆN MỤC CHA *@
+                                <a href="/category/@parent.CategoryId" class="text-decoration-none d-flex align-items-start category-link @(parent.CategoryId == id ? "active-cat" : "")">
+                                    <i class="oi oi-folder mt-1 me-2 text-danger" style="font-size: 0.8rem;"></i>
+                                    <span class="flex-grow-1 fw-bold">@parent.CategoryName</span>
+                                    <span class="text-muted ms-1">(@GetPostCount(parent.CategoryName))</span>
+                                </a>
+
+                                @* GIAO DIỆN MỤC CON (NẾU CÓ) *@
+                                @if (children.Any())
+                                {
+                                    /* Thụt lề (ms-3) và có đường viền mờ bên trái (border-start) để tạo cảm giác cây thư mục */
+                                    <ul class="list-unstyled mt-2 ms-3 ps-3 border-start border-2" style="border-color: #e9ecef !important;">
+                                        @foreach (var child in children)
+                                        {
+                                            <li class="mb-2">
+                                                <a href="/category/@child.CategoryId" class="text-decoration-none d-flex align-items-start category-link @(child.CategoryId == id ? "active-cat" : "")">
+                                                    <i class="oi oi-chevron-right mt-1 me-2 text-secondary" style="font-size: 0.6rem;"></i>
+                                                    <span class="flex-grow-1">@child.CategoryName</span>
+                                                    <span class="text-muted ms-1">(@GetPostCount(child.CategoryName))</span>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-truncate-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .card-hover .rounded-3 {
+        transition: transform 0.3s ease;
+    }
+
+    .card-hover:hover .rounded-3 {
+        transform: scale(1.02);
+    }
+
+    .hover-danger {
+        transition: color 0.2s ease;
+    }
+
+    .card-hover:hover .hover-danger {
+        color: #dc3545 !important;
+    }
+
+    .category-link {
+        color: #555;
+        transition: color 0.2s ease;
+        line-height: 1.5;
+    }
+
+        .category-link:hover {
+            color: #dc3545;
+        }
+
+    .active-cat {
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    [Parameter]
+    public string type { get; set; } = "articles";
+
+    private bool isLoading = true;
+    private CategoryDto? currentCategory;
+    private List<CategoryDto>? categories;
+    private List<PostDto>? allPosts;
+    private List<PostDto>? filteredPosts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        isLoading = true;
+
+        try
+        {
+            if (categories == null) categories = await CategoryService.GetAllAsync();
+            if (allPosts == null) allPosts = await PostService.GetAllAsync();
+
+            if (categories != null)
+            {
+                currentCategory = categories.FirstOrDefault(c => c.CategoryId == id);
+            }
+
+            if (allPosts != null && currentCategory != null)
+            {
+                // THUẬT TOÁN "LÁCH LUẬT": Lọc theo Tên thay vì ID
+                var categoryPosts = allPosts.Where(p => p.CategoryName == currentCategory.CategoryName).ToList();
+
+                if (type == "videos")
+                {
+                    filteredPosts = categoryPosts.Where(p => p.SourceType == "Video").OrderByDescending(p => p.CreatedDate).ToList();
+                }
+                else
+                {
+                    filteredPosts = categoryPosts.Where(p => p.SourceType != "Video").OrderByDescending(p => p.CreatedDate).ToList();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi tải dữ liệu: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // ĐẾM SỐ BÀI VIẾT BẰNG TÊN CHUYÊN MỤC
+    private int GetPostCount(string categoryName)
+    {
+        if (allPosts == null || string.IsNullOrEmpty(categoryName)) return 0;
+        return allPosts.Count(p => p.CategoryName == categoryName);
+    }
+}

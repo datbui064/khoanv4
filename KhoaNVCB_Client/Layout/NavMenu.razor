@@ -1,0 +1,36 @@
+﻿@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@inject CategoryService categoryService
+<div class="d-flex align-items-center">
+    <a href="/" class="text-decoration-none d-flex align-items-center">
+        <i class="oi oi-shield me-2 fs-2 text-danger"></i>
+        <span class="fs-4 fw-bold text-uppercase" style="color: #b71c1c;">KHOA AN NINH NỘI ĐỊA</span>
+    </a>
+</div>
+
+@code {
+    private List<CategoryDto>? categories;
+    // Lọc lấy danh sách chuyên mục cha để hiện trên Menu
+    private List<CategoryDto>? parentCategories => categories?.Where(c => c.ParentId == null).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categories = await categoryService.GetAllAsync();
+        }
+        catch
+        {
+            categories = new List<CategoryDto>();
+        }
+    }
+}
+
+@foreach (var cat in parentCategories ?? new())
+{
+    <li>
+        <a class="dropdown-item py-2 px-3 dropdown-item-custom" href="/category/@cat.CategoryId">
+            @cat.CategoryName
+        </a>
+    </li>
+}

@@ -1,0 +1,79 @@
+﻿@page "/admin/quiz-history"
+@using KhoaNVCB_Client.Services
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
+@inject QuizService QuizService
+
+<div class="container py-4">
+    <h3 class="fw-bold mb-4 text-uppercase border-start border-danger border-4 ps-2">KẾT QUẢ THI TRẮC NGHIỆM</h3>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th class="ps-3">Học viên</th>
+                        <th>Chuyên đề thi</th>
+                        <th class="text-center">Số câu đúng</th>
+                        <th class="text-center">Xếp loại</th>
+                        <th class="text-end pe-3">Thời gian thi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (historyList == null)
+                    {
+                        <tr><td colspan="5" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                    }
+                    else if (!historyList.Any())
+                    {
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Chưa có ai làm bài thi nào.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in historyList)
+                        {
+                            // Ép kiểu dynamic (JSON) sang dạng hiển thị được
+                            int correct = (int)item.GetProperty("correctAnswers").GetInt32();
+                            int total = (int)item.GetProperty("totalQuestions").GetInt32();
+                            double percent = (double)correct / total;
+
+                            <tr>
+                                <td class="fw-bold ps-3 text-danger">@item.GetProperty("fullName").GetString()</td>
+                                <td class="text-primary fw-semibold">@item.GetProperty("categoryName").GetString()</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark border fs-6">@correct / @total</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (percent == 1)
+                                    {
+                                        <span class="badge bg-success">Xuất sắc</span>
+                                    }
+                                    else if (percent >= 0.7)
+                                    {
+                                        <span class="badge bg-primary">Khá Giỏi</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark">Cần cố gắng</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-3 text-muted small">
+                                    @item.GetProperty("attemptDate").GetDateTime().ToString("dd/MM/yyyy HH:mm")
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<dynamic>? historyList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        historyList = await QuizService.GetHistoryAsync();
+    }
+}

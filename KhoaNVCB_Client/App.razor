@@ -3,10 +3,23 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
                 <NotAuthorized>
-                    <div class="container mt-5 text-center">
-                        <h3 class="text-danger">CẢNH BÁO AN NINH</h3>
-                        <p>Khu vực dành riêng cho Quản trị viên. Bạn không có quyền truy cập!</p>
-                        <a href="/login" class="btn btn-primary mt-3">Quay lại Đăng nhập</a>
+                    <div class="auth-required-container">
+                        <div class="auth-card text-center shadow-lg">
+                            <div class="lock-icon mb-4">
+                                <i class="fa-solid fa-user-lock"></i>
+                            </div>
+                            <h3 class="fw-bold text-navy">TRUY CẬP BỊ HẠN CHẾ</h3>
+                            <div class="gold-divider mx-auto my-3"></div>
+                            <p class="text-muted">
+                                Rất tiếc, tài liệu này thuộc phạm vi nội bộ. <br>
+                                Vui lòng đăng nhập để xác thực quyền truy cập.
+                            </p>
+
+                            <div class="d-grid gap-2 mt-4">
+                                <a href="/login" class="btn btn-gold-auth">ĐĂNG NHẬP NGAY</a>
+                                <a href="/" class="btn btn-outline-secondary btn-sm">Quay về trang chủ</a>
+                            </div>
+                        </div>
                     </div>
                 </NotAuthorized>
             </AuthorizeRouteView>
@@ -20,3 +33,48 @@
         </NotFound>
     </Router>
 </CascadingAuthenticationState>
+<style>
+    .auth-required-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 20px;
+    }
+
+    .auth-card {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        max-width: 450px;
+        width: 100%;
+        border-top: 5px solid #c5a059;
+    }
+
+    .lock-icon {
+        font-size: 4rem;
+        color: #c5a059;
+        filter: drop-shadow(0 5px 15px rgba(197, 160, 89, 0.3));
+    }
+
+    .gold-divider {
+        width: 50px;
+        height: 3px;
+        background: #c5a059;
+    }
+
+    .btn-gold-auth {
+        background: #c5a059;
+        color: white;
+        font-weight: 700;
+        padding: 12px;
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+
+        .btn-gold-auth:hover {
+            background: #0a192f;
+            color: white;
+            transform: translateY(-2px);
+        }
+</style>

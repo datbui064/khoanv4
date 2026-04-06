@@ -1,66 +1,105 @@
-﻿@page "/admin/quiz-history"
+﻿@page "/admin/quizzes/history/{sessionId:int}"
 @using KhoaNVCB_Client.Services
 @using Microsoft.AspNetCore.Authorization
+@using System.Text.Json
 @attribute [Authorize(Roles = "Admin")]
 @inject QuizService QuizService
+@inject NavigationManager Navigation
 
 <div class="container py-4">
-    <h3 class="fw-bold mb-4 text-uppercase border-start border-danger border-4 ps-2">KẾT QUẢ THI TRẮC NGHIỆM</h3>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-uppercase border-start border-danger border-4 ps-2 mb-0" style="color: #b71c1c;">
+            BẢNG XẾP HẠNG PHIÊN THI
+        </h3>
+        <button class="btn btn-outline-secondary fw-bold rounded-pill px-4" @onclick="GoBack">
+            <i class="oi oi-arrow-left me-2"></i> Trở về Quản lý
+        </button>
+    </div>
 
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
         <div class="card-body p-0 table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead class="bg-dark text-white">
+                <thead class="bg-dark text-white text-uppercase" style="font-size: 0.9rem;">
                     <tr>
-                        <th class="ps-3">Học viên</th>
-                        <th>Chuyên đề thi</th>
-                        <th class="text-center">Số câu đúng</th>
-                        <th class="text-center">Xếp loại</th>
-                        <th class="text-end pe-3">Thời gian thi</th>
+                        <th class="ps-4 text-center" style="width: 80px;">TOP</th>
+                        <th>Họ và Tên</th>
+                        <th>Mã SV / Email</th>
+                        <th>Lớp</th>
+                        <th class="text-center">Điểm số</th>
+                        <th class="text-center">Đánh giá</th>
+                        <th class="text-end pe-4">Nộp bài lúc</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (historyList == null)
                     {
-                        <tr><td colspan="5" class="text-center py-4">Đang tải dữ liệu...</td></tr>
+                        <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-danger"></div><div class="mt-2 text-muted">Đang lấy dữ liệu xếp hạng...</div></td></tr>
                     }
                     else if (!historyList.Any())
                     {
-                        <tr><td colspan="5" class="text-center py-4 text-muted">Chưa có ai làm bài thi nào.</td></tr>
+                        <tr><td colspan="7" class="text-center py-5 text-muted fs-5"><i class="oi oi-warning fs-3 text-warning mb-2 d-block"></i> Chưa có thí sinh nào nộp bài trong phiên này.</td></tr>
                     }
                     else
                     {
+                        int rank = 1;
                         @foreach (var item in historyList)
                         {
-                            // Ép kiểu dynamic (JSON) sang dạng hiển thị được
-                            int correct = (int)item.GetProperty("correctAnswers").GetInt32();
-                            int total = (int)item.GetProperty("totalQuestions").GetInt32();
-                            double percent = (double)correct / total;
+                            // Ép kiểu an toàn từ JsonElement
+                            string fullName = item.GetProperty("fullName").GetString() ?? "Không tên";
+                            string studentId = item.GetProperty("studentIdOrEmail").GetString() ?? "";
+                            string className = item.GetProperty("className").GetString() ?? "";
+                            int correct = item.GetProperty("correctAnswers").GetInt32();
+                            int total = item.GetProperty("totalQuestions").GetInt32();
+                            DateTime attemptDate = item.GetProperty("attemptDate").GetDateTime();
 
-                            <tr>
-                                <td class="fw-bold ps-3 text-danger">@item.GetProperty("fullName").GetString()</td>
-                                <td class="text-primary fw-semibold">@item.GetProperty("categoryName").GetString()</td>
+                            double percent = total > 0 ? (double)correct / total : 0;
+
+                            <tr class="@(rank <= 3 ? "bg-light-warning" : "")">
+                                <td class="ps-4 text-center fw-bold fs-5">
+                                    @if (rank == 1)
+                                    {
+                                        <span title="Top 1">🥇</span>
+                                    }
+                                    else if (rank == 2)
+                                    {
+                                        <span title="Top 2">🥈</span>
+                                    }
+                                    else if (rank == 3)
+                                    {
+                                        <span title="Top 3">🥉</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@rank</span>
+                                    }
+                                </td>
+                                <td class="fw-bold text-danger" style="font-size: 1.1rem;">@fullName</td>
+                                <td class="text-secondary fw-semibold">@studentId</td>
+                                <td class="text-secondary fw-semibold">@className</td>
                                 <td class="text-center">
-                                    <span class="badge bg-light text-dark border fs-6">@correct / @total</span>
+                                    <span class="badge bg-white text-dark border border-2 border-danger fs-6 px-3 py-2 rounded-pill shadow-sm">
+                                        @correct / @total
+                                    </span>
                                 </td>
                                 <td class="text-center">
                                     @if (percent == 1)
                                     {
-                                        <span class="badge bg-success">Xuất sắc</span>
+                                        <span class="badge bg-success rounded-pill px-3 py-2">Xuất sắc</span>
                                     }
                                     else if (percent >= 0.7)
                                     {
-                                        <span class="badge bg-primary">Khá Giỏi</span>
+                                        <span class="badge bg-primary rounded-pill px-3 py-2">Khá Giỏi</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-warning text-dark">Cần cố gắng</span>
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Cần cố gắng</span>
                                     }
                                 </td>
-                                <td class="text-end pe-3 text-muted small">
-                                    @item.GetProperty("attemptDate").GetDateTime().ToString("dd/MM/yyyy HH:mm")
+                                <td class="text-end pe-4 text-muted small">
+                                    @attemptDate.ToString("HH:mm - dd/MM/yyyy")
                                 </td>
                             </tr>
+                            rank++;
                         }
                     }
                 </tbody>
@@ -69,11 +108,27 @@
     </div>
 </div>
 
+<style>
+    /* Nền vàng nhạt cho Top 3 người xuất sắc nhất */
+    .bg-light-warning {
+        background-color: #fffde7 !important;
+    }
+</style>
+
 @code {
-    private List<dynamic>? historyList;
+    [Parameter]
+    public int sessionId { get; set; }
+
+    private List<JsonElement>? historyList;
 
     protected override async Task OnInitializedAsync()
     {
-        historyList = await QuizService.GetHistoryAsync();
+        // Gọi API lấy lịch sử xếp hạng của đúng cái SessionId này
+        historyList = await QuizService.GetSessionHistoryAsync(sessionId);
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/quizzes");
     }
 }

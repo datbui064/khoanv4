@@ -1,12 +1,17 @@
-﻿@page "/post/{id:int}"
+﻿﻿
+@page "/post/{id:int}"
 @using KhoaNVCB_Client.Models
 @using KhoaNVCB_Client.Services
 @using Microsoft.AspNetCore.Authorization
-@attribute [AllowAnonymous]
+@attribute [Authorize]
 @inject PostService PostService
 @inject CategoryService CategoryService
 @inject AuthenticationStateProvider AuthStateProvider
-<PageTitle>@(post?.Title ?? "Đang tải...") - Khoa NV3</PageTitle>
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+@* THÊM DÒNG NÀY ĐỂ GỌI JAVASCRIPT LOCALSTORAGE *@
+
+<PageTitle>@(post?.Title ?? "Đang tải...") - Khoa NV4</PageTitle>
 
 <div class="container py-5">
     @if (isLoading)
@@ -51,31 +56,17 @@
                 }
 
                 <div class="d-flex align-items-center text-muted small mb-4 pb-3 border-bottom">
-                    <span class="me-4"><i class="oi oi-person me-1"></i> Tác giả: <strong>@(post.AuthorName ?? "Khoa NV3")</strong></span>
+                    <span class="me-4"><i class="oi oi-person me-1"></i> Tác giả: <strong>@(post.AuthorName ?? "Khoa NV4")</strong></span>
                     <span><i class="oi oi-clock me-1"></i> Xuất bản: <strong>@post.CreatedDate?.ToString("dd/MM/yyyy")</strong></span>
+                    <button class="btn btn-sm btn-outline-danger ms-auto rounded-pill px-3 fw-bold" @onclick="OpenShareModal">
+                        <i class="oi oi-share-boxed me-1"></i> Chia sẻ
+                    </button>
                 </div>
 
                 <div class="post-content">
                     @((MarkupString)(post.Content ?? ""))
                 </div>
-                @* NÚT RỦ RÊ THI TRẮC NGHIỆM SAU KHI ĐỌC XONG BÀI *@
-                <div class="mt-5 p-4 bg-light rounded-4 border text-center shadow-sm">
-                    <h5 class="fw-bold mb-3" style="color: #1a237e;">Bạn đã nắm vững kiến thức phần này chưa?</h5>
-                    <AuthorizeView>
-                        <Authorized>
-                            <a href="/quiz" class="btn btn-danger btn-lg fw-bold px-5 rounded-pill shadow">
-                                <i class="oi oi-media-play me-2"></i> BẮT ĐẦU KIỂM TRA NGAY
-                            </a>
-                        </Authorized>
-                        <NotAuthorized>
-                            <p class="text-muted small mb-3">Vui lòng đăng nhập để tham gia làm bài đánh giá năng lực.</p>
-                            <a href="/login?returnUrl=/post/@id" class="btn btn-outline-danger fw-bold px-4 rounded-pill">
-                                <i class="oi oi-account-login me-2"></i> Đăng nhập để thi
-                            </a>
-                        </NotAuthorized>
-                    </AuthorizeView>
-                </div>
-                @* --- PHƯƠNG ÁN 1: DẢI CHUYÊN MỤC VUỐT NGANG (CHỈ HIỆN TRÊN MOBILE) --- *@
+                @* CÁC MODULE MOBILE (Giữ nguyên) *@
                 <div class="mobile-categories-chips d-lg-none mt-5 pt-4 border-top border-2">
                     <h5 class="fw-bold mb-3 text-uppercase" style="color: #1a237e; font-size: 1.1rem;">Khám phá chuyên mục</h5>
                     <div class="chips-container d-flex gap-2 pb-2">
@@ -90,7 +81,7 @@
                         }
                     </div>
                 </div>
-                @* --- BÀI VIẾT MỚI (CHỈ HIỆN TRÊN MOBILE - VUỐT NGANG) --- *@
+
                 <div class="mobile-recent-posts d-lg-none mt-4 pt-4 border-top border-2">
                     <h5 class="fw-bold mb-3 text-uppercase" style="color: #1a237e; font-size: 1.1rem;">Bài viết mới cập nhật</h5>
                     <div class="horizontal-scroll-container d-flex gap-3 pb-2">
@@ -114,8 +105,9 @@
                         }
                     </div>
                 </div>
-                @* ------------------------------------------------------------------- *@
 
+                @* ------------------------------------------------------------------- *@
+                @* KHU VỰC BÌNH LUẬN *@
                 <div class="comments-section mt-5 pt-4 border-top border-2">
                     <h4 class="fw-bold mb-4" style="color: #1a237e;">
                         <i class="oi oi-chat me-2"></i> Bình luận (@comments.Count)
@@ -129,7 +121,7 @@
                                 <div class="d-flex mb-4">
                                     <div class="flex-shrink-0 me-3">
                                         <div class="bg-secondary rounded-circle d-flex justify-content-center align-items-center text-white fw-bold shadow-sm" style="width: 50px; height: 50px; font-size: 1.2rem;">
-                                            @(comment.FullName.Substring(0, 1).ToUpper())
+                                            @(!string.IsNullOrEmpty(comment.FullName) ? comment.FullName.Substring(0, 1).ToUpper() : "U")
                                         </div>
                                     </div>
                                     <div class="flex-grow-1 bg-light p-3 rounded-3 border">
@@ -144,41 +136,55 @@
                         </div>
                     }
 
-                    <div class="comment-form bg-white p-4 rounded-3 border shadow-sm">
-                        <h5 class="fw-bold mb-3">Để lại một bình luận</h5>
+                    @* FORM BÌNH LUẬN MỚI (GIỐNG HỆT ẢNH THIẾT KẾ) *@
+                    <div class="comment-form p-4" style="background-color: #f5f5f5; border-radius: 4px;">
+                        <h4 class="fw-bold mb-2">Để lại một bình luận</h4>
+                        <p class="text-muted mb-4" style="font-size: 0.95rem;">Email của bạn sẽ không được hiển thị công khai. Các trường bắt buộc được đánh dấu *</p>
 
-                        <AuthorizeView>
-                            <Authorized>
-                                @if (!string.IsNullOrEmpty(commentError))
-                                {
-                                    <div class="alert alert-danger py-2 small">@commentError</div>
-                                }
-                                <div class="mb-3">
-                                    <textarea class="form-control bg-light" rows="4" @bind="newCommentText" placeholder="Nhập nội dung thảo luận của bạn tại đây..."></textarea>
-                                </div>
-                                <div class="text-end">
-                                    <button class="btn btn-danger px-4 fw-bold" @onclick="SubmitComment" disabled="@isSubmittingComment">
-                                        @if (isSubmittingComment)
-                                        {
-                                            <span class="spinner-border spinner-border-sm me-2"></span>
-                                        }
-                                        GỬI BÌNH LUẬN
-                                    </button>
-                                </div>
-                            </Authorized>
-                            <NotAuthorized>
-                                <div class="alert alert-secondary text-center mb-0">
-                                    Vui lòng
-                                    <a href="/login?returnUrl=/post/@id" class="fw-bold text-danger text-decoration-none">Đăng nhập</a>
-                                    để tham gia thảo luận bài viết này.
-                                </div>
-                            </NotAuthorized>
-                        </AuthorizeView>
+                        @if (!string.IsNullOrEmpty(commentError))
+                        {
+                            <div class="alert alert-danger py-2 small">@commentError</div>
+                        }
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Bình luận *</label>
+                            <textarea class="form-control rounded-1 border-1" rows="6" @bind="newCommentText" style="resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <label class="form-label fw-bold">Tên *</label>
+                                <input type="text" class="form-control rounded-1 border-1" @bind="commentFullName" />
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <label class="form-label fw-bold">Email *</label>
+                                <input type="email" class="form-control rounded-1 border-1" @bind="commentEmail" />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Trang web</label>
+                                <input type="text" class="form-control rounded-1 border-1" @bind="commentWebsite" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4 form-check d-flex align-items-center mt-4">
+                            <input type="checkbox" class="form-check-input mt-0 me-2" id="saveInfo" @bind="saveCommentInfo" style="width: 1.2rem; height: 1.2rem; cursor: pointer;" />
+                            <label class="form-check-label fw-bold" for="saveInfo" style="font-size: 0.95rem; cursor: pointer; color: #333;">
+                                Lưu tên của tôi, email, và trang web trong trình duyệt này cho lần bình luận kế tiếp của tôi.
+                            </label>
+                        </div>
+
+                        <button class="btn text-white px-4 py-2 fw-bold" style="background-color: #4a3a6b; border-radius: 2px;" @onclick="SubmitComment" disabled="@isSubmittingComment">
+                            @if (isSubmittingComment)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            GỬI BÌNH LUẬN
+                        </button>
                     </div>
                 </div>
             </div>
 
-            @* CỘT PHẢI: SIDEBAR (CHỈ HIỆN TRÊN MÁY TÍNH - d-none d-lg-block) *@
+            @* CỘT PHẢI: SIDEBAR (Giữ nguyên) *@
             <div class="col-lg-4 col-xl-3 d-none d-lg-block">
                 <div class="sidebar-box p-4 rounded-3 shadow-sm bg-white border sticky-top" style="top: 80px;">
                     <h6 class="fw-bold text-uppercase mb-4" style="color: #1a237e;">CHUYÊN MỤC BÀI VIẾT</h6>
@@ -216,7 +222,7 @@
                         }
                     </ul>
                 </div>
-                @* --- BÀI VIẾT MỚI (CHỈ HIỆN TRÊN DESKTOP - DANH SÁCH DỌC) --- *@
+
                 <div class="mt-5 pt-4 border-top border-2">
                     <h6 class="fw-bold text-uppercase mb-4" style="color: #1a237e;">BÀI VIẾT MỚI</h6>
                     @if (recentPosts != null && recentPosts.Any())
@@ -240,6 +246,36 @@
         </div>
     }
 </div>
+@* ---- BẢNG POPUP CHIA SẺ (SẼ HIỆN RA KHI BẤM NÚT) ---- *@
+@if (showShareModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.6); backdrop-filter: blur(3px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-bottom-0 pb-0">
+                    <h5 class="modal-title fw-bold text-dark w-100 text-center mt-2">Chia sẻ bài viết</h5>
+                    <button type="button" class="btn-close position-absolute" style="right: 20px; top: 20px;" @onclick="CloseShareModal"></button>
+                </div>
+                <div class="modal-body text-center pt-2 pb-4 px-4">
+                    <p class="text-muted small mb-4">Quét mã QR bằng Camera điện thoại hoặc Zalo để đọc bài viết</p>
+                    
+                    @* ẢNH QR ĐƯỢC TẠO TỰ ĐỘNG TỪ API MIỄN PHÍ *@
+                    <div class="p-3 bg-white border rounded-4 d-inline-block shadow-sm mb-4">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=@Uri.EscapeDataString(currentUrl)" alt="QR Code" style="width: 180px; height: 180px;" />
+                    </div>
+                    
+                    <div class="input-group mb-2 shadow-sm rounded-2 overflow-hidden">
+                        <input type="text" class="form-control bg-light text-muted border-0" value="@currentUrl" readonly>
+                        <button class="btn @(isCopied ? "btn-success" : "btn-primary") fw-bold px-3 border-0" @onclick="CopyLink">
+                            <i class="oi @(isCopied ? "oi-check" : "oi-document")"></i> @(isCopied ? "Đã chép" : "Copy")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 <style>
     /* ... (Phần CSS cũ của bài viết giữ nguyên) ... */
@@ -305,7 +341,7 @@
         border-top: 4px solid #1a237e !important;
     }
 
-    /* --- CSS CHO DẢI CHUYÊN MỤC VUỐT NGANG (MOBILE CHIPS) --- */
+    /* CSS CHO CHIPS MOBILE */
     .mobile-categories-chips {
         width: 100%;
     }
@@ -314,11 +350,11 @@
         overflow-x: auto;
         white-space: nowrap;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Ẩn thanh cuộn trên Firefox */
+        scrollbar-width: none;
     }
 
         .chips-container::-webkit-scrollbar {
-            display: none; /* Ẩn thanh cuộn trên Chrome/Safari/Edge */
+            display: none;
         }
 
     .chip-item {
@@ -327,7 +363,7 @@
         padding: 8px 16px;
         background-color: #f8f9fa;
         color: #495057;
-        border-radius: 50px; /* Bo tròn hoàn toàn tạo hình viên thuốc (Pill) */
+        border-radius: 50px;
         font-size: 0.95rem;
         border: 1px solid #e9ecef;
         transition: all 0.2s ease;
@@ -347,7 +383,7 @@
         }
 
     .active-chip {
-        background-color: #dc3545; /* Màu đỏ nổi bật cho chuyên mục hiện tại */
+        background-color: #dc3545;
         color: white !important;
         border-color: #dc3545;
         font-weight: bold;
@@ -367,68 +403,74 @@
     private List<CategoryDto>? categories;
     private List<PostDto>? allPosts;
     private bool isLoading = true;
+    private List<PostDto> recentPosts = new();
+
+    // Biến cho Form Bình Luận
     private List<CommentDto> comments = new();
     private string newCommentText = "";
+    private string commentFullName = "";
+    private string commentEmail = "";
+    private string commentWebsite = "";
+    private bool saveCommentInfo = false;
     private string? commentError;
     private bool isSubmittingComment = false;
-    private int? currentAccountId;
-    private List<PostDto> recentPosts = new();
+
+    private bool showShareModal = false;
+    private string currentUrl = "";
+    private bool isCopied = false;
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
 
         post = await PostService.GetByIdAsync(id);
-
         if (categories == null) categories = await CategoryService.GetAllAsync();
         allPosts = await PostService.GetAllAsync();
+
         if (allPosts != null)
         {
-            // Lọc ra 5 bài mới nhất (đã duyệt) và KHÔNG TRÙNG với bài đang xem
-            recentPosts = allPosts
-                .Where(p => p.Status == "Published" && p.PostId != id)
-                .OrderByDescending(p => p.CreatedDate)
-                .Take(5)
-                .ToList();
+            recentPosts = allPosts.Where(p => p.Status == "Published" && p.PostId != id)
+                                  .OrderByDescending(p => p.CreatedDate).Take(5).ToList();
         }
 
         comments = await PostService.GetCommentsByPostAsync(id);
+        isLoading = false;
+    }
 
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+    // Sự kiện xảy ra sau khi giao diện đã vẽ xong (Để gọi LocalStorage an toàn)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
         {
-            var idClaim = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)
-                          ?? user.FindFirst("sub")
-                          ?? user.FindFirst("nameid");
+            // Thử lấy thông tin đã lưu trong bộ nhớ trình duyệt
+            var savedName = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_name");
+            var savedEmail = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_email");
+            var savedWebsite = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_website");
 
-            if (idClaim != null && int.TryParse(idClaim.Value, out int accId))
+            if (!string.IsNullOrEmpty(savedName))
             {
-                currentAccountId = accId;
-                Console.WriteLine($"[DEBUG] Đã nhận diện ID người dùng: {currentAccountId}");
-            }
-            else
-            {
-                Console.WriteLine("[DEBUG] Không tìm thấy Claim ID trong Token!");
+                commentFullName = savedName;
+                commentEmail = savedEmail ?? "";
+                commentWebsite = savedWebsite ?? "";
+                saveCommentInfo = true; // Tự động đánh dấu tick
+                StateHasChanged(); // Ép giao diện vẽ lại để hiện thông tin
             }
         }
-
-        isLoading = false;
     }
 
     private async Task SubmitComment()
     {
         commentError = null;
 
-        if (string.IsNullOrWhiteSpace(newCommentText))
+        // Bắt lỗi nhập liệu
+        if (string.IsNullOrWhiteSpace(newCommentText) || string.IsNullOrWhiteSpace(commentFullName) || string.IsNullOrWhiteSpace(commentEmail))
         {
-            commentError = "Vui lòng nhập nội dung bình luận.";
+            commentError = "Vui lòng nhập đầy đủ Tên, Email và Nội dung bình luận (Các trường có dấu *).";
             return;
         }
 
-        if (currentAccountId == null)
+        if (!commentEmail.Contains("@") || !commentEmail.Contains("."))
         {
-            commentError = "Lỗi xác thực người dùng. Vui lòng đăng nhập lại.";
+            commentError = "Email không đúng định dạng.";
             return;
         }
 
@@ -437,16 +479,32 @@
         var newComment = new CreateCommentDto
             {
                 PostId = id,
-                AccountId = currentAccountId.Value,
-                Content = newCommentText
+                FullName = commentFullName.Trim(),
+                Email = commentEmail.Trim(),
+                Website = commentWebsite?.Trim(),
+                Content = newCommentText.Trim()
             };
 
         var success = await PostService.CreateCommentAsync(newComment);
 
         if (success)
         {
-            newCommentText = "";
+            newCommentText = ""; // Chỉ xóa ô nội dung, giữ nguyên tên tuổi
             comments = await PostService.GetCommentsByPostAsync(id);
+
+            // XỬ LÝ LƯU THÔNG TIN BẰNG JAVASCRIPT
+            if (saveCommentInfo)
+            {
+                await JS.InvokeVoidAsync("localStorage.setItem", "cmt_name", commentFullName);
+                await JS.InvokeVoidAsync("localStorage.setItem", "cmt_email", commentEmail);
+                await JS.InvokeVoidAsync("localStorage.setItem", "cmt_website", commentWebsite ?? "");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("localStorage.removeItem", "cmt_name");
+                await JS.InvokeVoidAsync("localStorage.removeItem", "cmt_email");
+                await JS.InvokeVoidAsync("localStorage.removeItem", "cmt_website");
+            }
         }
         else
         {
@@ -456,18 +514,12 @@
         isSubmittingComment = false;
     }
 
+    // Các hàm phụ trợ giữ nguyên
     private string GetEmbedUrl(string url)
     {
         if (string.IsNullOrEmpty(url)) return "";
-
-        if (url.Contains("youtube.com/watch?v="))
-        {
-            return url.Replace("watch?v=", "embed/");
-        }
-        if (url.Contains("youtu.be/"))
-        {
-            return url.Replace("youtu.be/", "youtube.com/embed/");
-        }
+        if (url.Contains("youtube.com/watch?v=")) return url.Replace("watch?v=", "embed/");
+        if (url.Contains("youtu.be/")) return url.Replace("youtu.be/", "youtube.com/embed/");
         return url;
     }
 
@@ -475,5 +527,33 @@
     {
         if (allPosts == null || string.IsNullOrEmpty(categoryName)) return 0;
         return allPosts.Count(p => p.CategoryName == categoryName);
+    }
+    private void OpenShareModal()
+    {
+        // Lấy đường link hiện tại của trình duyệt
+        currentUrl = Navigation.Uri;
+        isCopied = false;
+        showShareModal = true;
+    }
+
+    private void CloseShareModal()
+    {
+        showShareModal = false;
+    }
+
+    private async Task CopyLink()
+    {
+        // Gọi hàm Javascript ở index.html để chép vào Clipboard
+        var success = await JS.InvokeAsync<bool>("copyToClipboard", currentUrl);
+        if (success)
+        {
+            isCopied = true;
+            StateHasChanged();
+
+            // Hiện nút xanh "Đã chép" trong 2 giây rồi đổi lại thành chữ "Copy"
+            await Task.Delay(2000);
+            isCopied = false;
+            StateHasChanged();
+        }
     }
 }

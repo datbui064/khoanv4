@@ -1,0 +1,97 @@
+﻿﻿
+@page "/admin/support-tickets"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@inject SupportTicketService TicketService
+@inject IJSRuntime JS
+@attribute [Authorize(Roles = "Admin")]
+
+<div class="container py-4">
+    <h3 class="fw-bold text-uppercase text-danger mb-4 border-start border-4 border-danger ps-2">QUẢN LÝ YÊU CẦU HỖ TRỢ</h3>
+
+    @if (tickets == null)
+    {
+        <div class="text-center"><div class="spinner-border text-danger"></div></div>
+    }
+    else if (!tickets.Any())
+    {
+        <div class="alert alert-info shadow-sm"><i class="oi oi-info"></i> Chưa có câu hỏi hỗ trợ nào từ người dùng.</div>
+    }
+    else
+    {
+        <div class="table-responsive bg-white shadow-sm rounded-3">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark text-white">
+                    <tr>
+                        <th style="width: 150px;">Thời gian</th>
+                        <th style="width: 150px;">Người gửi</th>
+                        <th style="width: 200px;">Liên hệ</th>
+                        <th>Nội dung câu hỏi</th>
+                        <th class="text-center" style="width: 120px;">Trạng thái</th>
+                        <th class="text-end" style="width: 100px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var t in tickets)
+                    {
+                        <tr>
+                            <td class="text-muted small">@t.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td class="fw-bold text-primary">@t.FullName</td>
+                            <td><span class="badge bg-light text-dark border border-secondary" style="font-size: 0.85rem;">@t.ContactInfo</span></td>
+                            <td style="white-space: pre-wrap; line-height: 1.4;">@t.Question</td>
+                            <td class="text-center">
+                                @if (t.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark px-2 py-1"><i class="oi oi-clock me-1"></i> Chờ xử lý</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success px-2 py-1"><i class="oi oi-check me-1"></i> Đã giải quyết</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (t.Status == "Pending")
+                                {
+                                    <button class="btn btn-sm btn-success shadow-sm" @onclick="() => MarkAsResolved(t.TicketId)" title="Đánh dấu đã giải quyết">
+                                        <i class="oi oi-check"></i> Xong
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<SupportTicketDto>? tickets;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTickets();
+    }
+
+    private async Task LoadTickets()
+    {
+        tickets = await TicketService.GetAllTicketsAsync();
+    }
+
+    private async Task MarkAsResolved(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Xác nhận bạn đã liên hệ và giải đáp xong cho người dùng này?");
+        if (confirmed)
+        {
+            var success = await TicketService.ResolveTicketAsync(id);
+            if (success)
+            {
+                await LoadTickets(); // Tải lại bảng ngay lập tức
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", "Lỗi khi cập nhật trạng thái!");
+            }
+        }
+    }
+}

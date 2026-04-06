@@ -1,26 +1,104 @@
-﻿@page "/admin/quizzes"
+﻿﻿
+@page "/admin/quizzes"
 @using KhoaNVCB_Client.Models
 @using KhoaNVCB_Client.Services
+@using System.Text.Json
 @inject CategoryService CategoryService
 @inject QuizService QuizService
 @inject IJSRuntime JS
-@using Microsoft.AspNetCore.Authorization          @* <--- THÊM DÒNG NÀY *@
+@using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin")]
+
 <div class="container-fluid py-4">
-    <div class="mb-4">
-        <h3 class="fw-bold text-uppercase border-start border-danger border-4 ps-2" style="color: #b71c1c;">
-            QUẢN LÝ CÂU HỎI TRẮC NGHIỆM
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h3 class="fw-bold text-uppercase border-start border-danger border-4 ps-2 mb-0" style="color: #b71c1c;">
+            QUẢN LÝ NGÂN HÀNG ĐỀ & PHIÊN THI
         </h3>
+        <button class="btn btn-danger btn-lg shadow fw-bold rounded-pill px-4" @onclick="OpenCreateSessionModal">
+            <i class="oi oi-bolt me-2"></i> TẠO PHIÊN THI MỚI
+        </button>
     </div>
 
-    <div class="row">
-        @* CỘT TRÁI: FORM CẤU HÌNH VÀ IMPORT *@
-        <div class="col-lg-4 mb-4">
-            @* KHỐI 1: CHỌN CHUYÊN MỤC *@
-            <div class="card shadow-sm border-0 mb-4 rounded-0">
-                <div class="card-header bg-dark text-white fw-bold rounded-0 text-uppercase">
-                    1. CHỌN CHUYÊN MỤC
+    @* --- DANH SÁCH CÁC PHIÊN THI ĐANG MỞ HOẶC GẦN ĐÂY --- *@
+    @if (sessions != null && sessions.Any())
+    {
+        <div class="card shadow-sm border-0 mb-5 rounded-4">
+            <div class="card-header bg-white fw-bold text-dark py-3">
+                <i class="oi oi-rss text-danger me-2"></i> CÁC PHIÊN THI GẦN ĐÂY
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tên phiên thi</th>
+                                <th>Mã CODE (Tham gia)</th>
+                                <th>Cấu hình</th>
+                                <th>Trạng thái</th>
+                                <th class="text-end">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in sessions)
+                            {
+                                var jsonDoc = (JsonElement)s;
+                                int sessionId = jsonDoc.GetProperty("sessionId").GetInt32();
+                                string sessionName = jsonDoc.GetProperty("sessionName").GetString() ?? "";
+                                string sessionCode = jsonDoc.GetProperty("sessionCode").GetString() ?? "";
+                                int qCount = jsonDoc.GetProperty("questionCount").GetInt32();
+                                int timeLimit = jsonDoc.GetProperty("timeLimitMinutes").GetInt32();
+                                bool isActive = jsonDoc.GetProperty("isActive").GetBoolean();
+
+                                <tr>
+                                    <td class="fw-bold">@sessionName</td>
+                                    <td>
+                                        <div class="input-group input-group-sm" style="width: 200px;">
+                                            <input type="text" class="form-control fw-bold text-danger text-center" value="@sessionCode" readonly>
+                                            <button class="btn btn-outline-secondary" @onclick='() => CopyJoinLink(sessionCode)'>Copy</button>
+                                        </div>
+                                    </td>
+                                    <td class="small text-muted">@qCount câu / @timeLimit phút</td>
+                                    <td>
+                                        @if (isActive)
+                                        {
+                                            <span class="badge bg-success rounded-pill px-3">Đang mở (Live)</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary rounded-pill px-3">Đã khóa</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <button class="btn btn-sm btn-outline-dark mb-1" @onclick="() => ShowQrForSession(sessionCode)" title="Xem lại QR Code">
+                                            <i class="oi oi-grid-two-up me-1"></i> QR
+                                        </button>
+
+                                        <button class="btn btn-sm @(isActive ? "btn-warning" : "btn-success") ms-1 mb-1" @onclick="() => ToggleSessionState(sessionId)">
+                                            <i class="oi @(isActive ? "oi-lock-locked" : "oi-check") me-1"></i> @(isActive ? "Khóa" : "Mở")
+                                        </button>
+
+                                        <a href="/admin/quizzes/history/@sessionId" class="btn btn-sm btn-outline-primary ms-1 mb-1">
+                                            <i class="oi oi-list me-1"></i> Kết quả
+                                        </a>
+
+                                        <button class="btn btn-sm btn-outline-danger ms-1 mb-1" @onclick="() => DeleteSession(sessionId)">
+                                            <i class="oi oi-trash me-1"></i> Xóa
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        @* CỘT TRÁI: FORM IMPORT *@
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm border-0 mb-4 rounded-0">
+                <div class="card-header bg-dark text-white fw-bold rounded-0 text-uppercase">1. CHỌN CHUYÊN MỤC</div>
                 <div class="card-body bg-light">
                     <select class="form-select" @bind="selectedCategoryId" @bind:after="LoadQuestions">
                         <option value="0">-- Chọn chuyên mục để thao tác --</option>
@@ -35,11 +113,8 @@
                 </div>
             </div>
 
-            @* KHỐI 2: IMPORT EXCEL *@
             <div class="card shadow-sm border-0 rounded-0 @(selectedCategoryId == 0 ? "opacity-50" : "")">
-                <div class="card-header bg-dark text-white fw-bold rounded-0 text-uppercase">
-                    2. NHẬP CÂU HỎI TỪ EXCEL
-                </div>
+                <div class="card-header bg-dark text-white fw-bold rounded-0 text-uppercase">2. NHẬP CÂU HỎI TỪ EXCEL</div>
                 <div class="card-body bg-light">
                     <div class="mb-3">
                         <button class="btn btn-outline-primary w-100" @onclick="DownloadTemplate" disabled="@(selectedCategoryId == 0)">
@@ -53,9 +128,7 @@
 
                     @if (!string.IsNullOrEmpty(importMessage))
                     {
-                        <div class="alert @(isImportError ? "alert-danger" : "alert-success") p-2 small">
-                            @importMessage
-                        </div>
+                        <div class="alert @(isImportError ? "alert-danger" : "alert-success") p-2 small">@importMessage</div>
                     }
 
                     <button class="btn btn-danger w-100 fw-bold" @onclick="UploadExcel" disabled="@(selectedFile == null || isUploading || selectedCategoryId == 0)">
@@ -71,7 +144,8 @@
 
         @* CỘT PHẢI: BẢNG DANH SÁCH CÂU HỎI *@
         <div class="col-lg-8">
-            <div class="table-responsive bg-white shadow-sm p-3">
+            <div class="table-responsive bg-white shadow-sm p-3 border">
+                <h6 class="fw-bold mb-3 text-secondary"><i class="oi oi-list"></i> KHO CÂU HỎI</h6>
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr class="border-bottom border-dark border-2">
@@ -107,19 +181,10 @@
                                             <span class="me-3"><strong class="@(q.CorrectAnswer == "D" ? "text-danger" : "")">D.</strong> @q.OptionD</span>
                                         </div>
                                     </td>
-                                    <td class="text-center">
-                                        <span class="badge bg-danger fs-6 px-3 py-2">@q.CorrectAnswer</span>
-                                    </td>
-                                    <td class="text-center">
-                                        @* Đã mở khóa 2 nút Sửa và Xóa *@
+                                    <td class="text-center"><span class="badge bg-danger fs-6 px-3 py-2">@q.CorrectAnswer</span></td>
                                     <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => OpenEditModal(q)">
-                                            <i class="oi oi-pencil"></i> Sửa
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteQuestion(q.QuestionId)">
-                                            <i class="oi oi-trash"></i> Xóa
-                                        </button>
-                                    </td>
+                                        <button class="btn btn-sm btn-outline-primary me-2 mb-1" @onclick="() => OpenEditModal(q)"><i class="oi oi-pencil"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger mb-1" @onclick="() => DeleteQuestion(q.QuestionId)"><i class="oi oi-trash"></i></button>
                                     </td>
                                 </tr>
                             }
@@ -131,10 +196,61 @@
     </div>
 </div>
 
-@* MÀN HÌNH CHÌM (MODAL) ĐỂ SỬA CÂU HỎI *@
+@* ---- MÀN HÌNH TẠO PHIÊN THI (MODAL) ---- *@
+@if (isCreatingSession)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="oi oi-bolt me-2"></i> TẠO PHIÊN THI MỚI</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseCreateSessionModal"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tên phiên thi (VD: Kiểm tra 15 phút)</label>
+                        <input type="text" class="form-control border-secondary" @bind="newSessionName" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Bốc đề từ chuyên mục</label>
+                        <select class="form-select border-secondary" @bind="newSessionCategoryId">
+                            <option value="0">Tất cả chuyên mục (Trộn ngẫu nhiên toàn bộ kho)</option>
+                            @if (categories != null)
+                            {
+                                @foreach (var cat in categories)
+                                {
+                                    <option value="@cat.CategoryId">@cat.CategoryName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold text-danger">Số câu hỏi bốc ra</label>
+                            <input type="number" class="form-control border-danger fw-bold" @bind="newSessionQuestionCount" min="1" />
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold text-danger">Thời gian (Phút)</label>
+                            <input type="number" class="form-control border-danger fw-bold" @bind="newSessionTimeLimit" min="1" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light pt-0">
+                    <button class="btn btn-secondary px-4 fw-bold rounded-pill" @onclick="CloseCreateSessionModal">HỦY BỎ</button>
+                    <button class="btn btn-danger px-4 fw-bold rounded-pill shadow" @onclick="SubmitCreateSession">
+                        <i class="oi oi-media-play me-1"></i> TẠO & PHÁT ĐỀ
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* (MÀN HÌNH SỬA CÂU HỎI CŨ GIỮ NGUYÊN) *@
 @if (isEditing && editingQuestion != null)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1050;">
+        @* ... Toàn bộ code Modal Sửa Câu Hỏi lúc nãy ... (Tự dán lại đoạn <div class="modal-dialog modal-lg ... tới hết khối if) *@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-dark text-white rounded-top">
@@ -147,22 +263,10 @@
                         <textarea class="form-control" @bind="editingQuestion.Content" rows="3"></textarea>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Đáp án A</label>
-                            <input type="text" class="form-control" @bind="editingQuestion.OptionA" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Đáp án B</label>
-                            <input type="text" class="form-control" @bind="editingQuestion.OptionB" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Đáp án C</label>
-                            <input type="text" class="form-control" @bind="editingQuestion.OptionC" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Đáp án D</label>
-                            <input type="text" class="form-control" @bind="editingQuestion.OptionD" />
-                        </div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Đáp án A</label><input type="text" class="form-control" @bind="editingQuestion.OptionA" /></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Đáp án B</label><input type="text" class="form-control" @bind="editingQuestion.OptionB" /></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Đáp án C</label><input type="text" class="form-control" @bind="editingQuestion.OptionC" /></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Đáp án D</label><input type="text" class="form-control" @bind="editingQuestion.OptionD" /></div>
                     </div>
                     <div class="mb-3 w-50">
                         <label class="form-label fw-bold text-danger">Đáp án đúng</label>
@@ -182,27 +286,155 @@
         </div>
     </div>
 }
+@* ---- MÀN HÌNH HIỂN THỊ MÃ QR (CHIẾU LÊN MÁY CHIẾU) ---- *@
+@if (showQrModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 1055;">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg text-center p-2">
+                <div class="modal-header border-0 pb-0 justify-content-center position-relative">
+                    <h2 class="fw-bold text-danger text-uppercase mb-0" style="letter-spacing: 2px;">THAM GIA PHIÊN THI</h2>
+                    <button type="button" class="btn-close position-absolute" style="right: 15px; top: 15px;" @onclick="CloseQrModal"></button>
+                </div>
+                <div class="modal-body py-4">
+                    <p class="text-muted fs-5 mb-4">Học viên quét mã QR bên dưới hoặc truy cập đường link để vào phòng thi</p>
+
+                    @* MÃ QR SIÊU TO KHỔNG LỒ *@
+                    <div class="bg-white p-3 rounded-4 shadow-sm d-inline-block mb-4 border border-2">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=@Uri.EscapeDataString(generatedJoinLink)" alt="QR Code" style="width: 280px; height: 280px;" />
+                    </div>
+
+                    @* MÃ CODE DÀNH CHO AI NHẬP TAY *@
+                    <div class="display-3 fw-bold text-dark mb-4" style="letter-spacing: 8px;">
+                        @generatedSessionCode
+                    </div>
+
+                    @* LINK COPY *@
+                    <div class="input-group input-group-lg mx-auto shadow-sm" style="max-width: 600px;">
+                        <input type="text" class="form-control bg-light text-center fw-bold fs-5 text-primary" value="@generatedJoinLink" readonly>
+                        <button class="btn @(isLinkCopied ? "btn-success" : "btn-dark") fw-bold px-4" @onclick="CopyGeneratedLink">
+                            <i class="oi @(isLinkCopied ? "oi-check" : "oi-clipboard")"></i> @(isLinkCopied ? "Đã chép" : "Copy Link")
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 justify-content-center pt-0">
+                    <button class="btn btn-outline-secondary px-5 fw-bold rounded-pill" @onclick="CloseQrModal">ĐÓNG MÀN HÌNH NÀY</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private List<CategoryDto>? categories;
     private int selectedCategoryId = 0;
     private List<QuestionDto>? questions;
-
-    // Biến cho Import
+    private bool showQrModal = false;
+    // Biến cho Phiên Thi (Session)
+    private List<JsonElement>? sessions;
+    private bool isCreatingSession = false;
+    private string newSessionName = "Kiểm tra 15 phút";
+    private int newSessionCategoryId = 0;
+    private int newSessionQuestionCount = 20;
+    private int newSessionTimeLimit = 15;
+    private string generatedSessionCode = "";
+    private string generatedJoinLink = "";
+    private bool isLinkCopied = false;
+    // ... (Các biến cũ: IBrowserFile, isEditing, editingQuestion... giữ nguyên) ...
     private IBrowserFile? selectedFile;
     private bool isUploading = false;
     private string importMessage = "";
     private bool isImportError = false;
-
-    // Biến cho việc Sửa câu hỏi
     private bool isEditing = false;
     private QuestionDto? editingQuestion;
 
     protected override async Task OnInitializedAsync()
     {
         categories = await CategoryService.GetAllAsync();
+        await LoadSessions();
     }
 
+    private async Task LoadSessions()
+    {
+        sessions = await QuizService.GetAllSessionsAsync();
+    }
+
+    // --- LOGIC TẠO PHIÊN THI ---
+    private void OpenCreateSessionModal() { isCreatingSession = true; }
+    private void CloseCreateSessionModal() { isCreatingSession = false; }
+    private void CloseQrModal() { showQrModal = false; }
+
+    private async Task SubmitCreateSession()
+    {
+        if (string.IsNullOrWhiteSpace(newSessionName))
+        {
+            await JS.InvokeVoidAsync("alert", "Vui lòng nhập tên phiên thi."); return;
+        }
+
+        var req = new
+        {
+            SessionName = newSessionName,
+            CategoryId = newSessionCategoryId,
+            QuestionCount = newSessionQuestionCount,
+            TimeLimitMinutes = newSessionTimeLimit
+        };
+
+        var result = await QuizService.CreateSessionAsync(req);
+
+        if (result.HasValue)
+        {
+            await LoadSessions();
+            CloseCreateSessionModal(); // Đóng form cấu hình nhỏ
+
+            // 1. Bóc mã code từ API trả về
+            generatedSessionCode = result.Value.GetProperty("sessionCode").GetString() ?? "";
+
+            // 2. Tạo link tham gia (https://.../join/CODE)
+            string baseUrl = await JS.InvokeAsync<string>("eval", "window.location.origin");
+            generatedJoinLink = $"{baseUrl}/join/{generatedSessionCode}";
+
+            // 3. Mở bảng QR Code to đùng lên
+            isLinkCopied = false;
+            showQrModal = true;
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", "Lỗi khi tạo phiên thi.");
+        }
+    }
+
+    private async Task CopyGeneratedLink()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", generatedJoinLink);
+        isLinkCopied = true;
+        StateHasChanged();
+        await Task.Delay(2000); // Đợi 2 giây
+        await JS.InvokeVoidAsync("alert", $"Đã chép đường dẫn tham gia:\n{CopyJoinLink}");
+        isLinkCopied = false;
+        StateHasChanged();
+    }
+
+    private async Task ToggleSessionState(int sessionId)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Bạn có chắc muốn Khóa/Mở lại phiên thi này?");
+        if (confirmed)
+        {
+            await QuizService.ToggleSessionAsync(sessionId);
+            await LoadSessions();
+        }
+    }
+
+    private async Task CopyJoinLink(string code)
+    {
+        // Tạo link đầy đủ để sinh viên truy cập (Ví dụ: https://localhost:xxxx/join/ABCDEFGH)
+        var currentUri = new Uri(JS.InvokeAsync<string>("eval", "window.location.href").Result.ToString());
+        string link = $"{currentUri.Scheme}://{currentUri.Authority}/join/{code}";
+
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", link);
+        await JS.InvokeVoidAsync("alert", $"Đã chép đường dẫn tham gia:\n{link}");
+    }
+
+    // --- CÁC HÀM CŨ GIỮ NGUYÊN (LoadQuestions, HandleFileSelected, UploadExcel, SaveQuestion, DeleteQuestion) ---
     private async Task LoadQuestions()
     {
         if (selectedCategoryId > 0)
@@ -210,102 +442,18 @@
             questions = null;
             questions = await QuizService.GetQuestionsByCategoryAsync(selectedCategoryId);
         }
-        else
-        {
-            questions = new List<QuestionDto>();
-        }
-    }
-
-    // --- CÁC HÀM THÊM MỚI CHO SỬA & XÓA ---
-
-    private void OpenEditModal(QuestionDto q)
-    {
-        // Clone dữ liệu ra một bản nháp để sửa, lỡ bấm Hủy thì dữ liệu cũ trên bảng không bị thay đổi
-        editingQuestion = new QuestionDto
-            {
-                QuestionId = q.QuestionId,
-                CategoryId = q.CategoryId,
-                Content = q.Content,
-                OptionA = q.OptionA,
-                OptionB = q.OptionB,
-                OptionC = q.OptionC,
-                OptionD = q.OptionD,
-                CorrectAnswer = q.CorrectAnswer
-            };
-        isEditing = true;
-    }
-
-    private void CloseEditModal()
-    {
-        isEditing = false;
-        editingQuestion = null;
-    }
-
-    private async Task SaveQuestion()
-    {
-        if (editingQuestion != null)
-        {
-            var success = await QuizService.UpdateQuestionAsync(editingQuestion.QuestionId, editingQuestion);
-            if (success)
-            {
-                await LoadQuestions(); // Tải lại bảng
-                CloseEditModal();
-                await JS.InvokeVoidAsync("alert", "Cập nhật câu hỏi thành công!");
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "Lỗi khi cập nhật câu hỏi.");
-            }
-        }
-    }
-
-    private async Task DeleteQuestion(int id)
-    {
-        // Bật hộp thoại cảnh báo của trình duyệt
-        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Bạn có chắc chắn muốn xóa vĩnh viễn câu hỏi này không?");
-        if (confirmed)
-        {
-            var success = await QuizService.DeleteQuestionAsync(id);
-            if (success)
-            {
-                await LoadQuestions(); // Tải lại bảng sau khi xóa
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("alert", "Lỗi khi xóa câu hỏi.");
-            }
-        }
-    }
-
-    // --- GIỮ NGUYÊN CÁC HÀM IMPORT EXCEL ---
-    private async Task DownloadTemplate()
-    {
-        try
-        {
-            var fileBytes = await QuizService.DownloadTemplateAsync();
-            var fileName = "Template_NhapCauHoi.xlsx";
-            var fileStream = new DotNetStreamReference(new MemoryStream(fileBytes));
-            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, fileStream);
-        }
-        catch (Exception ex)
-        {
-            importMessage = "Lỗi khi tải template: " + ex.Message;
-            isImportError = true;
-        }
+        else { questions = new List<QuestionDto>(); }
     }
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
-        selectedFile = e.File;
-        importMessage = "";
+        selectedFile = e.File; importMessage = "";
     }
 
     private async Task UploadExcel()
     {
         if (selectedFile == null || selectedCategoryId == 0) return;
-        isUploading = true;
-        importMessage = "";
-        isImportError = false;
+        isUploading = true; importMessage = ""; isImportError = false;
 
         try
         {
@@ -322,20 +470,77 @@
                 selectedFile = null;
                 await LoadQuestions();
             }
+            else { isImportError = true; importMessage = result; }
+        }
+        catch (Exception ex) { isImportError = true; importMessage = "Lỗi kết nối: " + ex.Message; }
+        finally { isUploading = false; }
+    }
+
+    private async Task DownloadTemplate()
+    {
+        try
+        {
+            var fileBytes = await QuizService.DownloadTemplateAsync();
+            var fileStream = new DotNetStreamReference(new MemoryStream(fileBytes));
+            await JS.InvokeVoidAsync("downloadFileFromStream", "Template_NhapCauHoi.xlsx", fileStream);
+        }
+        catch (Exception ex) { importMessage = "Lỗi khi tải template: " + ex.Message; isImportError = true; }
+    }
+
+    private void OpenEditModal(QuestionDto q)
+    {
+        editingQuestion = new QuestionDto { QuestionId = q.QuestionId, CategoryId = q.CategoryId, Content = q.Content, OptionA = q.OptionA, OptionB = q.OptionB, OptionC = q.OptionC, OptionD = q.OptionD, CorrectAnswer = q.CorrectAnswer };
+        isEditing = true;
+    }
+    private void CloseEditModal() { isEditing = false; editingQuestion = null; }
+
+    private async Task SaveQuestion()
+    {
+        if (editingQuestion != null)
+        {
+            var success = await QuizService.UpdateQuestionAsync(editingQuestion.QuestionId, editingQuestion);
+            if (success) { await LoadQuestions(); CloseEditModal(); }
+            else { await JS.InvokeVoidAsync("alert", "Lỗi cập nhật."); }
+        }
+    }
+
+    private async Task DeleteQuestion(int id)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "Xóa vĩnh viễn?");
+        if (confirmed)
+        {
+            var success = await QuizService.DeleteQuestionAsync(id);
+            if (success) { await LoadQuestions(); }
+        }
+    }
+    // Mở lại bảng mã QR cho các phiên thi đã tạo
+    private async Task ShowQrForSession(string code)
+    {
+        generatedSessionCode = code;
+
+        // Lấy đường dẫn gốc hiện tại (An toàn 100%, không bị lỗi Blocking Thread)
+        string baseUrl = await JS.InvokeAsync<string>("eval", "window.location.origin");
+        generatedJoinLink = $"{baseUrl}/join/{generatedSessionCode}";
+
+        isLinkCopied = false;
+        showQrModal = true;
+    }
+
+    // Xóa cứng phiên thi
+    private async Task DeleteSession(int sessionId)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", "CẢNH BÁO ĐỎ:\nHành động này sẽ XÓA VĨNH VIỄN phiên thi cùng toàn bộ điểm số của sinh viên trong phiên này.\nBạn có chắc chắn muốn xóa không?");
+        if (confirmed)
+        {
+            var success = await QuizService.DeleteSessionAsync(sessionId);
+            if (success)
+            {
+                await LoadSessions(); // Tải lại bảng
+            }
             else
             {
-                isImportError = true;
-                importMessage = result;
+                await JS.InvokeVoidAsync("alert", "Lỗi khi xóa phiên thi.");
             }
-        }
-        catch (Exception ex)
-        {
-            isImportError = true;
-            importMessage = "Lỗi kết nối: " + ex.Message;
-        }
-        finally
-        {
-            isUploading = false;
         }
     }
 }

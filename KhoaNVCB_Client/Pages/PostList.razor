@@ -1,0 +1,137 @@
+﻿@page "/posts"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@attribute [Authorize]
+@inject PostService PostService
+
+<PageTitle>Tất cả bài viết - Khoa NV4</PageTitle>
+
+<div class="container py-5 mt-4">
+    @* --- TIÊU ĐỀ TRANG --- *@
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-uppercase text-navy">Kho lưu trữ bài viết</h2>
+        <div class="mx-auto bg-gold" style="height: 3px; width: 60px;"></div>
+        <p class="text-muted mt-3">Tổng hợp các nghiên cứu, tin tức và tài liệu nghiệp vụ mới nhất</p>
+    </div>
+
+    @if (allPosts == null)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-navy" role="status"></div>
+            <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+        </div>
+    }
+    else if (!allPosts.Any())
+    {
+        <div class="alert alert-info text-center">Hiện chưa có bài viết nào được xuất bản.</div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var post in allPosts)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <div class="modern-card shadow-sm border-0 h-100">
+                        <div class="card-img-container">
+                            <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
+                                 alt="@post.Title" />
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-gold-light text-white">@(post.CategoryName ?? "Tin tức")</span>
+                                <small class="text-muted"><i class="oi oi-clock me-1"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")</small>
+                            </div>
+                            <h5 class="fw-bold text-navy mb-3">
+                                <a href="/post/@post.PostId" class="text-decoration-none text-navy hover-gold">@post.Title</a>
+                            </h5>
+                            <p class="text-muted small text-truncate-3">
+                                @* Bạn có thể thêm mô tả ngắn ở đây nếu model có trường Description *@
+                                Chuyên mục @post.CategoryName cung cấp các góc nhìn chuyên sâu và tư liệu nghiệp vụ quý giá...
+                            </p>
+                            <hr class="opacity-10">
+                            <a href="/post/@post.PostId" class="fw-bold text-gold text-decoration-none small">
+                                ĐỌC TIẾP <i class="oi oi-arrow-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .text-navy {
+        color: #0a192f;
+    }
+
+    .bg-gold {
+        background-color: #c5a059;
+    }
+
+    .text-gold {
+        color: #c5a059;
+    }
+
+    .bg-gold-light {
+        background-color: #d4af37;
+    }
+
+    .hover-gold:hover {
+        color: #c5a059 !important;
+        transition: 0.3s;
+    }
+
+    .modern-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: #fff;
+    }
+
+        .modern-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        }
+
+    .card-img-container {
+        height: 200px;
+        overflow: hidden;
+    }
+
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .text-truncate-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+
+@code {
+    private List<PostDto>? allPosts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var data = await PostService.GetAllAsync();
+            if (data != null)
+            {
+                // Chỉ lấy các bài viết đã được xuất bản (Published)
+                allPosts = data.Where(p => p.Status == "Published")
+                               .OrderByDescending(p => p.CreatedDate)
+                               .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
+    }
+}

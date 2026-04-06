@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using System.Text.Json;
 using KhoaNVCB_Client.Models;
 
 namespace KhoaNVCB_Client.Services
@@ -12,39 +13,121 @@ namespace KhoaNVCB_Client.Services
             _http = http;
         }
 
-        // Tải file Excel mẫu
+        // --- CÁC HÀM CŨ GIỮ NGUYÊN ---
         public async Task<byte[]> DownloadTemplateAsync()
         {
             var response = await _http.GetAsync("api/Quizzes/template");
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsByteArrayAsync();
         }
-        // Lấy danh sách câu hỏi theo chuyên mục cho Admin
+
         public async Task<List<QuestionDto>> GetQuestionsByCategoryAsync(int categoryId)
         {
             return await _http.GetFromJsonAsync<List<QuestionDto>>($"api/Quizzes/category/{categoryId}") ?? new();
         }
-        // Cập nhật câu hỏi
+
         public async Task<bool> UpdateQuestionAsync(int id, QuestionDto question)
         {
             var response = await _http.PutAsJsonAsync($"api/Quizzes/question/{id}", question);
             return response.IsSuccessStatusCode;
         }
 
-        // Xóa câu hỏi
         public async Task<bool> DeleteQuestionAsync(int id)
         {
             var response = await _http.DeleteAsync($"api/Quizzes/question/{id}");
             return response.IsSuccessStatusCode;
         }
-        // Lấy đề thi ngẫu nhiên
-        public async Task<List<QuestionDto>> GetRandomQuestionsAsync(int categoryId)
+
+        public async Task<string> ImportExcelAsync(int categoryId, MultipartFormDataContent content)
         {
-            return await _http.GetFromJsonAsync<List<QuestionDto>>($"api/Quizzes/random/{categoryId}") ?? new();
+            var response = await _http.PostAsync($"api/Quizzes/import/{categoryId}", content);
+            if (response.IsSuccessStatusCode) return "Success";
+            return await response.Content.ReadAsStringAsync();
         }
 
-        // Nộp bài và nhận điểm
-        // Nộp bài và nhận điểm
+        // Lấy danh sách câu hỏi ngẫu nhiên theo chuyên đề (hoặc tất cả nếu categoryId = 0)
+        public async Task<List<QuestionDto>> GetRandomQuestionsAsync(int categoryId)
+        {
+            try
+            {
+                // Gọi đến endpoint API tương ứng (giả sử là api/Quizzes/random/{categoryId})
+                var response = await _http.GetAsync($"api/Quizzes/random/{categoryId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<List<QuestionDto>>() ?? new();
+                }
+                return new List<QuestionDto>();
+            }
+            catch
+            {
+                return new List<QuestionDto>();
+            }
+        }
+
+        // ===============================================
+        // --- CÁC HÀM MỚI: QUẢN LÝ PHIÊN THI (SESSION) ---
+        // ===============================================
+
+        // ===============================================
+        // --- CÁC HÀM MỚI: QUẢN LÝ PHIÊN THI (SESSION) ---
+        // ===============================================
+
+        public async Task<JsonElement?> CreateSessionAsync(object request)
+        {
+            var response = await _http.PostAsJsonAsync("api/Quizzes/session", request);
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<JsonElement>();
+            }
+            return null;
+        }
+
+        public async Task<List<JsonElement>> GetAllSessionsAsync()
+        {
+            try
+            {
+                return await _http.GetFromJsonAsync<List<JsonElement>>("api/Quizzes/sessions") ?? new();
+            }
+            catch { return new List<JsonElement>(); }
+        }
+
+        public async Task<bool> ToggleSessionAsync(int id)
+        {
+            var response = await _http.PutAsync($"api/Quizzes/session/{id}/toggle", null);
+            return response.IsSuccessStatusCode;
+        }
+
+        public async Task<List<JsonElement>> GetSessionHistoryAsync(int sessionId)
+        {
+            try
+            {
+                return await _http.GetFromJsonAsync<List<JsonElement>>($"api/Quizzes/session/{sessionId}/history") ?? new();
+            }
+            catch { return new List<JsonElement>(); }
+        }
+
+        // Học viên lấy đề thông qua mã SessionCode
+        public async Task<JsonElement?> JoinSessionAsync(string sessionCode)
+        {
+            var response = await _http.GetAsync($"api/Quizzes/join/{sessionCode}");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<JsonElement>();
+            }
+            throw new Exception(await response.Content.ReadAsStringAsync());
+        }
+
+        // ===============================================
+        // --- HÀM THI DÀNH CHO SINH VIÊN ---
+        // ===============================================
+
+        // Học viên lấy đề thông qua mã SessionCode
+        public async Task<bool> DeleteSessionAsync(int sessionId)
+        {
+            var response = await _http.DeleteAsync($"api/Quizzes/session/{sessionId}");
+            return response.IsSuccessStatusCode;
+        }
         public async Task<QuizResultDto?> SubmitQuizAsync(SubmitQuizRequest request)
         {
             var response = await _http.PostAsJsonAsync("api/Quizzes/submit", request);
@@ -54,22 +137,5 @@ namespace KhoaNVCB_Client.Services
             }
             return null;
         }
-
-        // Lấy lịch sử cho Admin
-        public async Task<List<dynamic>> GetHistoryAsync()
-        {
-            return await _http.GetFromJsonAsync<List<dynamic>>("api/Quizzes/history") ?? new();
-        }
-        // Import Excel (Đẩy file lên API)
-        public async Task<string> ImportExcelAsync(int categoryId, MultipartFormDataContent content)
-        {
-            var response = await _http.PostAsync($"api/Quizzes/import/{categoryId}", content);
-            if (response.IsSuccessStatusCode) return "Success";
-
-            // Nếu lỗi, đọc thông báo lỗi từ API (VD: Lỗi ở dòng số X)
-            return await response.Content.ReadAsStringAsync();
-        }
-
-        // Chỗ này sau này có thể thêm các hàm GetAllQuestions, GetSetting, UpdateSetting...
     }
 }

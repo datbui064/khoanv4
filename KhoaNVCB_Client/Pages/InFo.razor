@@ -1,0 +1,230 @@
+﻿@page "/about"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
+<PageTitle>Giới thiệu - Khoa NV4</PageTitle>
+
+@* --- HEADER TRANG (BANNER NHỎ) --- *@
+<div class="about-header">
+    <div class="container">
+        <h1 class="display-4 fw-bold">GIỚI THIỆU</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a href="/" class="text-white-50 text-decoration-none">Trang chủ</a></li>
+                <li class="breadcrumb-item active text-white" aria-current="page">Khoa NV4</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-5">
+        @* --- NỘI DUNG CHÍNH --- *@
+        <div class="col-lg-8">
+            <section class="mb-5 animate-up">
+                <div class="section-title-wrapper mb-4">
+                    <h2 class="fw-bold text-dark text-uppercase m-0">Khoa An Ninh Chính Trị Nội Bộ <span class="text-danger">(NV4)</span></h2>
+                    <div class="title-line"></div>
+                </div>
+
+                <div class="about-card p-4 rounded-4 shadow-sm bg-white border-0 mb-4">
+                    <p class="lead text-secondary italic border-start border-danger border-4 ps-3">
+                        Khoa An ninh chính trị nội bộ (Khoa NV4) là đơn vị giảng dạy chuyên sâu thuộc Học viện An ninh nhân dân, có bề dày truyền thống trong đào tạo và nghiên cứu khoa học.
+                    </p>
+                    <div class="content-text mt-4" style="line-height: 1.9; text-align: justify;">
+                        <p>
+                            Trang thông tin này được xây dựng nhằm mục đích cung cấp hệ thống học liệu, các công trình nghiên cứu và cập nhật những diễn biến mới nhất về công tác bảo vệ chính trị nội bộ. Đây là nhịp cầu kết nối giữa lý luận và thực tiễn, giúp giảng viên và học viên có cái nhìn sâu sắc, toàn diện về chuyên ngành.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-12">
+                        <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-shield-check text-danger me-2"></i>Chức năng và Nhiệm vụ</h5>
+                        <div class="task-list">
+                            <div class="task-item"><i class="oi oi-circle-check text-danger"></i> Đào tạo trình độ Đại học và sau Đại học chuyên ngành An ninh chính trị nội bộ.</div>
+                            <div class="task-item"><i class="oi oi-circle-check text-danger"></i> Nghiên cứu chuyên đề lý luận về bảo vệ bí mật Nhà nước, chống "tự diễn biến", "tự chuyển hóa".</div>
+                            <div class="task-item"><i class="oi oi-circle-check text-danger"></i> Tổ chức hoạt động thực tế, hội thảo khoa học cấp Bộ và cấp Học viện.</div>
+                            <div class="task-item"><i class="oi oi-circle-check text-danger"></i> Bồi dưỡng nghiệp vụ cho cán bộ thực hành trong lực lượng Công an nhân dân.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            @* --- GIÁ TRỊ CỐT LÕI --- *@
+            <div class="row g-4 mb-5">
+                <div class="col-md-4">
+                    <div class="value-card text-center p-4 rounded-4 shadow-sm">
+                        <div class="icon-circle bg-danger-soft text-danger mx-auto mb-3">
+                            <i class="oi oi-badge fs-3"></i>
+                        </div>
+                        <h6 class="fw-bold">Bản lĩnh</h6>
+                        <p class="small text-muted mb-0">Kiên định với mục tiêu bảo vệ Đảng, bảo vệ Ngành.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="value-card text-center p-4 rounded-4 shadow-sm">
+                        <div class="icon-circle bg-danger-soft text-danger mx-auto mb-3">
+                            <i class="oi oi-bolt fs-3"></i>
+                        </div>
+                        <h6 class="fw-bold">Trí tuệ</h6>
+                        <p class="small text-muted mb-0">Không ngừng đổi mới tư duy giảng dạy và nghiên cứu.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="value-card text-center p-4 rounded-4 shadow-sm">
+                        <div class="icon-circle bg-danger-soft text-danger mx-auto mb-3">
+                            <i class="oi oi-heart fs-3"></i>
+                        </div>
+                        <h6 class="fw-bold">Tâm huyết</h6>
+                        <p class="small text-muted mb-0">Hết lòng vì sự nghiệp trồng người, đào tạo thế hệ trẻ.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* --- SIDEBAR --- *@
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 20px;">
+                <div class="sidebar-info p-4 rounded-4 shadow-lg text-white mb-4">
+                    <div class="text-center mb-4">
+                        <img src="/Images/Logo_hoc_vien_ANND.png" class="img-fluid rounded-circle p-2 bg-white" style="width: 100px; height: 100px; object-fit: contain;" alt="Logo" />
+                    </div>
+                    <h5 class="fw-bold text-center mb-3">HỌC VIỆN AN NINH <br /> NHÂN DÂN</h5>
+                    <div class="info-details small">
+                        <div class="d-flex mb-3 align-items-start">
+                            <i class="oi oi-location me-3 mt-1"></i>
+                            <span>125 Trần Phú, Hà Đông, Hà Nội</span>
+                        </div>
+                        <div class="d-flex mb-3 align-items-start">
+                            <i class="oi oi-phone me-3 mt-1"></i>
+                            <span>(024) 3854 4320</span>
+                        </div>
+                        <div class="d-flex mb-3 align-items-start">
+                            <i class="oi oi-envelope-closed me-3 mt-1"></i>
+                            <span>khoa_nv4@hvannd.edu.vn</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-4 bg-light border-start border-danger border-4">
+                    <h6 class="fw-bold text-dark">Hỗ trợ học viên</h6>
+                    <p class="small text-muted">Mọi thắc mắc về tài liệu và bài giảng, vui lòng liên hệ văn phòng Khoa NV4.</p>
+                    <a href="/contact" class="btn btn-danger btn-sm w-100 rounded-pill shadow-sm mt-2">Gửi liên hệ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 1. Background Header */
+    .about-header {
+        background: linear-gradient(rgba(183, 28, 28, 0.9), rgba(183, 28, 28, 0.9)), url('/Images/hoc.jpg');
+        background-size: cover;
+        background-position: center;
+        padding: 60px 0;
+        text-align: center;
+        color: white;
+        margin-bottom: 30px;
+    }
+
+    /* 2. Tiêu đề */
+    .section-title-wrapper {
+        position: relative;
+    }
+
+    .title-line {
+        height: 4px;
+        width: 60px;
+        background: #dc3545;
+        margin-top: 10px;
+    }
+
+    /* 3. Cards */
+    .about-card {
+        transition: all 0.3s ease;
+    }
+
+    .value-card {
+        background: #fff;
+        border: 1px solid #eee;
+        transition: all 0.3s ease;
+    }
+
+        .value-card:hover {
+            transform: translateY(-10px);
+            border-color: #dc3545;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+        }
+
+    /* 4. Icon Circle */
+    .icon-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bg-danger-soft {
+        background: #fff5f5;
+    }
+
+    /* 5. Danh sách nhiệm vụ */
+    .task-list {
+        background: #fdfdfd;
+        border-radius: 15px;
+        padding: 10px;
+    }
+
+    .task-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.95rem;
+    }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item i {
+            margin-right: 10px;
+        }
+
+    /* 6. Sidebar Sidebar */
+    .sidebar-info {
+        background: #b71c1c;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .sidebar-info::before {
+            content: "";
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 150px;
+            height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+    /* Animation */
+    .animate-up {
+        animation: fadeInUp 0.8s ease-out;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

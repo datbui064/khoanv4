@@ -1,0 +1,168 @@
+﻿@page "/topics"
+@using Microsoft.AspNetCore.Authorization
+@using KhoaNVCB_Client.Models
+@attribute [Authorize]
+@inject HttpClient Http
+@inject NavigationManager Navigation
+
+<PageTitle>Quản lý Chuyên đề - Khoa NV4</PageTitle>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-uppercase border-start border-danger border-4 ps-3">Quản lý Chuyên đề</h3>
+        <button class="btn btn-danger rounded-pill px-4" @onclick="OpenAddModal">
+            <i class="oi oi-plus me-2"></i> Đăng chuyên đề mới
+        </button>
+    </div>
+
+    @if (topics == null)
+    {
+        <div class="text-center"><div class="spinner-border text-danger"></div></div>
+    }
+    else
+    {
+        <div class="table-responsive bg-white shadow-sm rounded-4 p-3">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tên chuyên đề</th>
+                        <th>Tác giả</th>
+                        <th>Ngày đăng</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in topics)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.Title</td>
+                            <td>@item.AuthorName</td>
+                            <td>@item.CreatedDate.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (item.Status == "Pending")
+                                {
+                                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                }
+                                else if (item.Status == "Approved")
+                                {
+                                    <span class="badge bg-success">Đã duyệt</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Từ chối</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <AuthorizeView Roles="Admin">
+                                    <Authorized>
+                                        @if (item.Status == "Pending")
+                                        {
+                                            <button class="btn btn-sm btn-outline-success me-1" @onclick="() => ApproveTopic(item.TopicId)">Duyệt</button>
+                                        }
+                                        <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditTopic(item)">Sửa</button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteTopic(item.TopicId)">Xóa</button>
+                                    </Authorized>
+                                    <NotAuthorized>
+                                        @if (item.UserId == currentUserId) // User chỉ được sửa/xóa bài của chính mình khi chưa duyệt
+                                        {
+                                            <button class="btn btn-sm btn-light" disabled="@(item.Status != "Pending")" @onclick="() => EditTopic(item)">Sửa</button>
+                                        }
+                                    </NotAuthorized>
+                                </AuthorizeView>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@* --- MODAL THÊM/SỬA (Đơn giản hóa) --- *@
+@if (showModal)
+{
+    <div class="modal fade show d-block" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow-lg">
+                <div class="modal-header bg-danger text-white rounded-top-4">
+                    <h5 class="modal-title">@(isEdit ? "Cập nhật chuyên đề" : "Thêm chuyên đề mới")</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Tiêu đề</label>
+                        <input type="text" class="form-control" @bind="model.Title" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Mô tả tóm tắt</label>
+                        <textarea class="form-control" rows="3" @bind="model.Description"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button class="btn btn-light rounded-pill px-4" @onclick="CloseModal">Hủy</button>
+                    <button class="btn btn-danger rounded-pill px-4" @onclick="SaveTopic">Lưu dữ liệu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .table thead th {
+        border-top: none;
+        font-size: 0.85rem;
+        text-uppercase: uppercase;
+        color: #666;
+    }
+
+    .badge {
+        padding: 8px 12px;
+        border-radius: 50px;
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    private List<TopicDto>? topics;
+    private TopicDto model = new();
+    private bool showModal = false;
+    private bool isEdit = false;
+    private string currentUserId = "user-id-xyz"; // Lấy từ AuthenticationStateProvider
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTopics();
+    }
+
+    private async Task LoadTopics()
+    {
+        topics = await Http.GetFromJsonAsync<List<TopicDto>>("api/Topics");
+    }
+
+    private void OpenAddModal() { model = new(); isEdit = false; showModal = true; }
+    private void CloseModal() => showModal = false;
+
+    private async Task SaveTopic()
+    {
+        if (isEdit) await Http.PutAsJsonAsync($"api/Topics/{model.TopicId}", model);
+        else await Http.PostAsJsonAsync("api/Topics", model);
+
+        showModal = false;
+        await LoadTopics();
+    }
+
+    private async Task ApproveTopic(int id)
+    {
+        await Http.PutAsync($"api/Topics/approve/{id}", null);
+        await LoadTopics();
+    }
+
+    private async Task DeleteTopic(int id)
+    {
+        await Http.DeleteAsync($"api/Topics/{id}");
+        await LoadTopics();
+    }
+
+    private void EditTopic(TopicDto item) { model = item; isEdit = true; showModal = true; }
+}

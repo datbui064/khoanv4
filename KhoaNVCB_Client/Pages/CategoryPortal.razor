@@ -2,10 +2,10 @@
 @using KhoaNVCB_Client.Models
 @using KhoaNVCB_Client.Services
 @using Microsoft.AspNetCore.Authorization
-@attribute [AllowAnonymous]
+@attribute [Authorize]
 @inject CategoryService CategoryService
 
-<PageTitle>@(category?.CategoryName ?? "Chuyên mục") - Khoa NV3</PageTitle>
+<PageTitle>@(category?.CategoryName ?? "Chuyên mục") - Khoa NV4</PageTitle>
 
 <div class="container py-5">
     @if (isLoading)

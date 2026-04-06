@@ -1,0 +1,170 @@
+﻿@page "/contact"
+@using Microsoft.AspNetCore.Authorization
+@attribute [AllowAnonymous]
+
+<PageTitle>Liên hệ - Khoa NV4</PageTitle>
+
+@* --- HEADER BANNER --- *@
+<div class="contact-header">
+    <div class="container text-center">
+        <h1 class="display-5 fw-bold text-uppercase">Liên hệ với chúng tôi</h1>
+        <p class="lead opacity-75">Khoa An ninh chính trị nội bộ luôn sẵn sàng lắng nghe và hỗ trợ bạn</p>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row g-4">
+        @* --- THÔNG TIN CHI TIẾT --- *@
+        <div class="col-lg-4">
+            <div class="contact-info-card p-4 rounded-4 shadow-sm bg-white h-100 border-top border-danger border-4">
+                <h4 class="fw-bold mb-4 text-dark">Thông tin kết nối</h4>
+
+                <div class="d-flex mb-4">
+                    <div class="contact-icon bg-danger text-white rounded-circle me-3">
+                        <i class="oi oi-location"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Địa chỉ</h6>
+                        <p class="text-muted small mb-0">125 Trần Phú, Hà Đông, Hà Nội (Học viện An ninh nhân dân)</p>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="contact-icon bg-danger text-white rounded-circle me-3">
+                        <i class="oi oi-phone"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Điện thoại</h6>
+                        <p class="text-muted small mb-0">(024) 3854 4320</p>
+                    </div>
+                </div>
+
+                <div class="d-flex mb-4">
+                    <div class="contact-icon bg-danger text-white rounded-circle me-3">
+                        <i class="oi oi-envelope-closed"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1">Email</h6>
+                        <p class="text-muted small mb-0">khoa_nv4@hvannd.edu.vn</p>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="working-hours">
+                    <h6 class="fw-bold mb-2"><i class="oi oi-clock me-2"></i>Giờ làm việc</h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="d-flex justify-content-between"><span>Thứ 2 - Thứ 6:</span> <span>07:30 - 17:00</span></li>
+                        <li class="d-flex justify-content-between"><span>Thứ 7:</span> <span>Trực ban</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        @* --- FORM GỬI TIN NHẮN --- *@
+        <div class="col-lg-8">
+            <div class="p-4 p-md-5 rounded-4 shadow-sm bg-white border-0">
+                <h4 class="fw-bold mb-4 text-dark">Gửi yêu cầu hỗ trợ</h4>
+                <EditForm Model="@contactModel" OnValidSubmit="HandleSubmit">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Họ và tên</label>
+                            <input type="text" class="form-control form-control-lg bg-light border-0 fs-6" placeholder="Nguyễn Văn A" @bind="contactModel.Name" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-uppercase">Địa chỉ Email</label>
+                            <input type="email" class="form-control form-control-lg bg-light border-0 fs-6" placeholder="example@gmail.com" @bind="contactModel.Email" required />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-uppercase">Tiêu đề</label>
+                            <input type="text" class="form-control form-control-lg bg-light border-0 fs-6" placeholder="Hỗ trợ tài liệu học tập..." @bind="contactModel.Subject" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-uppercase">Nội dung tin nhắn</label>
+                            <textarea class="form-control bg-light border-0 fs-6" rows="5" placeholder="Nhập nội dung bạn muốn gửi tới Khoa NV4..." @bind="contactModel.Message" required></textarea>
+                        </div>
+                        <div class="col-12 text-end mt-4">
+                            <button type="submit" class="btn btn-danger btn-lg px-5 rounded-pill shadow">
+                                <i class="oi oi-paper-plane me-2"></i> Gửi tin nhắn
+                            </button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    @* --- BẢN ĐỒ (Dùng Iframe mẫu của HVANND) --- *@
+    <div class="mt-5 rounded-4 overflow-hidden shadow-sm border">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3725.2804804885777!2d105.78935041143525!3d20.98139108057547!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3135accf04011535%3A0xa93dfa61fb043aaf!2sPeople%E2%80%99s%20Security%20Academy!5e0!3m2!1sen!2s!4v1775140682762!5m2!1sen!2s"
+                width="100%" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </div>
+
+</div>
+
+<style>
+    .contact-header {
+        background: #b71c1c;
+        color: white;
+        padding: 80px 0;
+        position: relative;
+    }
+
+    .contact-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .form-control:focus {
+        background: #fff !important;
+        box-shadow: 0 0 0 0.25 margin-top: 10px;
+        border: 1px solid #dc3545 !important;
+    }
+
+    .contact-info-card {
+        transition: transform 0.3s ease;
+    }
+
+        .contact-info-card:hover {
+            transform: translateY(-5px);
+        }
+
+    textarea {
+        resize: none;
+    }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+        .btn-danger:hover {
+            background-color: #b71c1c;
+            transform: scale(1.05);
+        }
+</style>
+
+@code {
+    private ContactForm contactModel = new ContactForm();
+
+    private void HandleSubmit()
+    {
+        // Xử lý gửi form ở đây (ví dụ gọi API hoặc hiện thông báo)
+        Console.WriteLine($"Gửi từ: {contactModel.Name}");
+        // Reset form
+        contactModel = new ContactForm();
+    }
+
+    public class ContactForm
+    {
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Subject { get; set; } = "";
+        public string Message { get; set; } = "";
+    }
+}

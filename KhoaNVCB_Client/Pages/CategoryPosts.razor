@@ -2,57 +2,83 @@
 @using KhoaNVCB_Client.Models
 @using KhoaNVCB_Client.Services
 @using Microsoft.AspNetCore.Authorization
-@attribute [AllowAnonymous]
+@attribute [Authorize]
 @inject PostService PostService
 @inject CategoryService CategoryService
 
-<PageTitle>@(currentCategory?.CategoryName ?? "Chuyên mục") - Khoa NV3</PageTitle>
+<PageTitle>@(currentCategory?.CategoryName ?? "Chuyên mục") - Khoa NV4</PageTitle>
 
 <div class="container py-5">
-    <div class="row">
-        <div class="col-lg-8 col-xl-9 mb-5">
-            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-                <h4 class="fw-bold text-uppercase m-0 text-dark border-start border-danger border-4 ps-2">
-                    @(type == "videos" ? "Video" : "Tin tức") - @(currentCategory?.CategoryName ?? "Đang tải...")
-                </h4>
+    <div class="row g-5">
+        <div class="col-lg-8">
+            <div class="category-header mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
+                        <li class="breadcrumb-item active text-danger" aria-current="page">@currentCategory?.CategoryName</li>
+                    </ol>
+                </nav>
+                <h2 class="fw-bold text-uppercase position-relative ps-3 border-start border-4 border-danger">
+                    @(type == "videos" ? "Video" : "Tin tức") - @(currentCategory?.CategoryName ?? "...")
+                </h2>
             </div>
 
             @if (isLoading)
             {
-                <div class="text-center py-5"><div class="spinner-border text-danger" role="status"></div></div>
+                <div class="d-flex justify-content-center py-5">
+                    <div class="spinner-grow text-danger" role="status"></div>
+                </div>
             }
             else if (filteredPosts == null || !filteredPosts.Any())
             {
-                <div class="alert alert-light border shadow-sm text-center py-5 rounded-3">
-                    <i class="oi oi-info fs-1 text-muted mb-3 d-block"></i>
-                    Hiện chưa có @(type == "videos" ? "video" : "tin bài") nào trong chuyên mục này.
+                <div class="text-center py-5 bg-white shadow-sm rounded-4 border">
+                    <i class="oi oi-document fs-1 text-muted mb-3"></i>
+                    <p class="text-muted">Hiện chưa có nội dung nào trong mục này.</p>
                 </div>
             }
             else
             {
-                <div class="row g-4">
+                <div class="list-container">
                     @foreach (var post in filteredPosts)
                     {
-                        <div class="col-md-6 mb-4">
-                            <div class="card h-100 border-0 card-hover bg-transparent">
-                                <div class="position-relative rounded-3 overflow-hidden shadow-sm">
-                                    <img src="@(string.IsNullOrEmpty(post.OriginalUrl) ? "images/Logo_hoc_vien_ANND.png" : post.OriginalUrl)"
-                                         class="w-100 object-fit-cover" alt="@post.Title" style="height: 220px;" />
+                        <div class="card mb-2 border-0 shadow-sm post-list-card overflow-hidden">
+                            <div class="row g-0 align-items-center">
+                                <div class="col-3 col-md-2 p-2">
+                                    <div class="ratio ratio-1x1 overflow-hidden rounded-3 shadow-sm border">
+                                        <img src="@(string.IsNullOrEmpty(post.OriginalUrl) ? "images/Logo_hoc_vien_ANND.png" : post.OriginalUrl)"
+                                             class="object-fit-cover"
+                                             alt="@post.Title" />
+                                    </div>
+                                </div>
 
-                                    @if (post.SourceType == "Video" || type == "videos")
-                                    {
-                                        <div class="position-absolute top-50 start-50 translate-middle">
-                                            <i class="oi oi-media-play text-white" style="font-size: 3.5rem; text-shadow: 0 4px 10px rgba(0,0,0,0.5);"></i>
+                                <div class="col-9 col-md-10">
+                                    <div class="card-body py-2 px-3 d-flex flex-column justify-content-center">
+
+                                        <a href="/post/@post.PostId" class="text-decoration-none stretched-link mb-1">
+                                            <h5 class="card-title fw-bold text-dark mb-0 fs-6 line-clamp-2" style="line-height: 1.3;">
+                                                @post.Title
+                                            </h5>
+                                        </a>
+
+                                        @if (!string.IsNullOrEmpty(post.Summary))
+                                        {
+                                            <p class="card-text text-muted small mb-2 d-none d-md-block line-clamp-1" style="font-size: 0.85rem;">
+                                                @post.Summary
+                                            </p>
+                                        }
+
+                                        <div class="d-flex align-items-center gap-3 mt-auto">
+                                            <span class="text-muted" style="font-size: 0.75rem;">
+                                                <i class="oi oi-calendar me-1"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")
+                                            </span>
+                                            <span class="text-danger fw-medium" style="font-size: 0.75rem;">
+                                                <i class="oi oi-eye me-1"></i> @(new Random().Next(100, 500)) views
+                                            </span>
                                         </div>
-                                    }
+
+                                    </div>
                                 </div>
 
-                                <div class="card-body px-0 pt-3 pb-0">
-                                    <a href="/post/@post.PostId" class="text-decoration-none stretched-link">
-                                        <h5 class="fw-bold text-dark hover-danger text-truncate-2" style="line-height: 1.4;">@post.Title</h5>
-                                    </a>
-                                    <p class="text-muted small mt-2 text-truncate-2 mb-0">@post.Summary</p>
-                                </div>
                             </div>
                         </div>
                     }
@@ -60,98 +86,212 @@
             }
         </div>
 
-        <div class="col-lg-4 col-xl-3">
-            <div class="sidebar-box p-4 rounded-3 shadow-sm bg-white border">
-                <h6 class="fw-bold text-uppercase mb-4" style="color: #1a237e;">CHUYÊN MỤC BÀI VIẾT</h6>
-                <ul class="list-unstyled mb-0">
-                    @if (categories != null)
-                    {
-                        @* 1. CHỈ LỌC CÁC CHUYÊN MỤC CHA (GỐC) ĐỂ HIỂN THỊ TRƯỚC *@
-                        foreach (var parent in categories.Where(c => c.ParentId == null))
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 2rem;">
+                <div class="modern-sidebar p-4 bg-white">
+                    <div class="sidebar-title-wrapper mb-4">
+                        <h6 class="sidebar-title">CHUYÊN MỤC BÀI VIẾT</h6>
+                        <div class="title-underline"></div>
+                    </div>
+
+                    <div class="category-stack">
+                        @if (categories != null)
                         {
-                            // Lấy danh sách các chuyên mục con thuộc về ông cha này
-                            var children = categories.Where(c => c.ParentId == parent.CategoryId).ToList();
-
-                            <li class="mb-3 border-bottom pb-2">
-                                @* GIAO DIỆN MỤC CHA *@
-                                <a href="/category/@parent.CategoryId" class="text-decoration-none d-flex align-items-start category-link @(parent.CategoryId == id ? "active-cat" : "")">
-                                    <i class="oi oi-folder mt-1 me-2 text-danger" style="font-size: 0.8rem;"></i>
-                                    <span class="flex-grow-1 fw-bold">@parent.CategoryName</span>
-                                    <span class="text-muted ms-1">(@GetPostCount(parent.CategoryName))</span>
-                                </a>
-
-                                @* GIAO DIỆN MỤC CON (NẾU CÓ) *@
-                                @if (children.Any())
-                                {
-                                    /* Thụt lề (ms-3) và có đường viền mờ bên trái (border-start) để tạo cảm giác cây thư mục */
-                                    <ul class="list-unstyled mt-2 ms-3 ps-3 border-start border-2" style="border-color: #e9ecef !important;">
-                                        @foreach (var child in children)
-                                        {
-                                            <li class="mb-2">
-                                                <a href="/category/@child.CategoryId" class="text-decoration-none d-flex align-items-start category-link @(child.CategoryId == id ? "active-cat" : "")">
-                                                    <i class="oi oi-chevron-right mt-1 me-2 text-secondary" style="font-size: 0.6rem;"></i>
-                                                    <span class="flex-grow-1">@child.CategoryName</span>
-                                                    <span class="text-muted ms-1">(@GetPostCount(child.CategoryName))</span>
-                                                </a>
-                                            </li>
-                                        }
-                                    </ul>
-                                }
-                            </li>
+                            @foreach (var parent in categories.Where(c => c.ParentId == null))
+                            {
+                                var isActive = parent.CategoryId == id;
+                                <div class="category-item">
+                                    <a href="/category/@parent.CategoryId/articles"
+                                       class="category-link @(isActive ? "active" : "")">
+                                        <div class="link-content">
+                                            <span class="category-name">@parent.CategoryName</span>
+                                            <span class="category-count">@GetPostCount(parent.CategoryName)</span>
+                                        </div>
+                                        <i class="oi oi-chevron-right arrow-icon"></i>
+                                    </a>
+                                </div>
+                            }
                         }
-                    }
-                </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    .text-truncate-2 {
+    .post-list-card {
+        transition: all 0.3s ease;
+        border: 1px solid transparent !important;
+    }
+
+        .post-list-card:hover {
+            background-color: #fff9f9; /* Đổi màu nền nhẹ khi di chuột */
+            border-color: #f8d7da !important;
+            transform: translateY(-2px);
+        }
+
+        .post-list-card .card-body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+        }
+
+    /* Thu nhỏ dòng chữ tóm tắt hơn nữa */
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    body {
+        background-color: #f4f6f9;
+    }
+
+    .line-clamp-2 {
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
 
-    .card-hover .rounded-3 {
-        transition: transform 0.3s ease;
+    /* List Card Style */
+    .post-list-card {
+        border-radius: 1rem !important;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .card-hover:hover .rounded-3 {
-        transform: scale(1.02);
-    }
-
-    .hover-danger {
-        transition: color 0.2s ease;
-    }
-
-    .card-hover:hover .hover-danger {
-        color: #dc3545 !important;
-    }
-
-    .category-link {
-        color: #555;
-        transition: color 0.2s ease;
-        line-height: 1.5;
-    }
-
-        .category-link:hover {
-            color: #dc3545;
+        .post-list-card:hover {
+            transform: scale(1.01);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
         }
 
-    .active-cat {
-        color: #dc3545 !important;
-        font-weight: bold;
+            .post-list-card:hover .card-title {
+                color: #dc3545 !important;
+            }
+
+   
+    /* Container chính của Sidebar */
+    .modern-sidebar {
+        border-radius: 20px;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
     }
+
+    /* Tiêu đề Chuyên mục */
+    .sidebar-title-wrapper {
+        position: relative;
+    }
+
+    .sidebar-title {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-weight: 800; /* Cực đậm */
+        font-size: 1.1rem; /* Kích thước vừa phải */
+        color: #1a202c; /* Màu đen xanh thanh lịch */
+        margin: 0;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+
+    }
+
+    .title-underline {
+        width: 40px;
+        height: 3px;
+        background: #dc3545;
+        margin-top: 8px;
+        border-radius: 2px;
+    }
+
+    /* Stack các item chuyên mục */
+    .category-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    /* Link chuyên mục */
+    .category-link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        border-radius: 12px;
+        color: #4a5568 !important;
+        text-decoration: none !important;
+        background: #f8f9fa;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .category-name {
+        font-weight: 600;
+        font-size: 0.85rem;
+        z-index: 1;
+    }
+
+    .category-count {
+        font-size: 0.7rem;
+        background: #fff;
+        color: #888;
+        padding: 2px 10px;
+        border-radius: 20px;
+        margin-left: 10px;
+        border: 1px solid #eee;
+        transition: all 0.3s;
+    }
+
+    .arrow-icon {
+        font-size: 0.7rem;
+        opacity: 0;
+        transform: translateX(-10px);
+        transition: all 0.3s;
+        z-index: 1;
+    }
+
+    /* Hiệu ứng HOVER */
+    .category-link:hover {
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.15);
+        color: #dc3545 !important;
+        transform: translateX(5px);
+    }
+
+        .category-link:hover .arrow-icon {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+    /* Trạng thái ACTIVE (Đang chọn) */
+    .category-link.active {
+        background: linear-gradient(135deg, #dc3545, #b02a37) !important;
+        color: #fff !important;
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+    }
+
+        .category-link.active .category-name {
+            color: #fff !important;
+        }
+
+        .category-link.active .category-count {
+            background: rgba(255,255,255,0.2);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        .category-link.active .arrow-icon {
+            opacity: 1;
+            transform: translateX(0);
+            color: #fff;
+        }
+
+        
 </style>
 
 @code {
-    [Parameter]
-    public int id { get; set; }
-
-    [Parameter]
-    public string type { get; set; } = "articles";
+    [Parameter] public int id { get; set; }
+    [Parameter] public string type { get; set; } = "articles";
 
     private bool isLoading = true;
     private CategoryDto? currentCategory;
@@ -162,46 +302,25 @@
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
-
         try
         {
             if (categories == null) categories = await CategoryService.GetAllAsync();
             if (allPosts == null) allPosts = await PostService.GetAllAsync();
 
-            if (categories != null)
-            {
-                currentCategory = categories.FirstOrDefault(c => c.CategoryId == id);
-            }
+            if (categories != null) currentCategory = categories.FirstOrDefault(c => c.CategoryId == id);
 
             if (allPosts != null && currentCategory != null)
             {
-                // THUẬT TOÁN "LÁCH LUẬT": Lọc theo Tên thay vì ID
                 var categoryPosts = allPosts.Where(p => p.CategoryName == currentCategory.CategoryName).ToList();
-
                 if (type == "videos")
-                {
                     filteredPosts = categoryPosts.Where(p => p.SourceType == "Video").OrderByDescending(p => p.CreatedDate).ToList();
-                }
                 else
-                {
                     filteredPosts = categoryPosts.Where(p => p.SourceType != "Video").OrderByDescending(p => p.CreatedDate).ToList();
-                }
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Lỗi tải dữ liệu: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-        }
+        catch (Exception ex) { Console.WriteLine(ex.Message); }
+        finally { isLoading = false; }
     }
 
-    // ĐẾM SỐ BÀI VIẾT BẰNG TÊN CHUYÊN MỤC
-    private int GetPostCount(string categoryName)
-    {
-        if (allPosts == null || string.IsNullOrEmpty(categoryName)) return 0;
-        return allPosts.Count(p => p.CategoryName == categoryName);
-    }
+    private int GetPostCount(string categoryName) => allPosts?.Count(p => p.CategoryName == categoryName) ?? 0;
 }

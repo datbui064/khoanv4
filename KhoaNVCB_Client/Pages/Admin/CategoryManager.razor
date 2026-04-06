@@ -1,11 +1,13 @@
-﻿@page "/admin/categories"
+﻿﻿
+@page "/admin/categories"
 @using KhoaNVCB_Client.Models
 @using KhoaNVCB_Client.Services
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin")]
 @inject CategoryService categoryService
 @inject PhotoUploadService PhotoUploadService
-
+@inject IJSRuntime JS
+@inject HttpClient Http
 <PageTitle>Quản lý Chuyên mục - Admin</PageTitle>
 
 <div class="container py-4">
@@ -216,8 +218,26 @@
 
     private async Task DeleteCategory(int id)
     {
-        await categoryService.DeleteAsync(id);
-        await LoadCategories();
+        // Hiện thông báo cảnh báo cực gắt
+        bool confirmed = await JS.InvokeAsync<bool>("confirm",
+            "CẢNH BÁO ĐỎ: Hành động này sẽ xóa SẠCH SÀNH SANH chuyên mục này, bao gồm toàn bộ CHUYÊN MỤC CON, BÀI VIẾT, BÌNH LUẬN và CÂU HỎI bên trong!\n\nBạn có chắc chắn muốn 'tuyệt diệt' nó không?");
+
+        // Nếu người dùng bấm Cancel -> Dừng lại ngay
+        if (!confirmed) return;
+
+        // Nếu bấm OK -> Gửi lệnh tử hình lên API
+        var response = await Http.DeleteAsync($"api/Categories/{id}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadCategories(); // Tải lại danh sách
+            await JS.InvokeVoidAsync("alert", "Đã quét sạch mọi thứ thành công!");
+        }
+        else
+        {
+            var errorMessage = await response.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("alert", errorMessage);
+        }
     }
 
     private void ResetForm()

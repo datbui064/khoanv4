@@ -4,17 +4,126 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Khoa An ninh nội địa</title>
+    <title>Khoa An ninh Chính trị Nội bộ - Học viện ANND</title>
     <base href="/KhoaNVCB_Client/" />
+
+   
     <link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
-    <link rel="icon" type="/icon-192.png" href="favicon.png" />
+
+   
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+   
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+   
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div id="app">
-        <div class="d-flex flex-column justify-content-center align-items-center vh-100 bg-light">
-            <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;"></div>
-            <h5 class="mt-3 text-secondary fw-bold text-uppercase">Đang tải hệ thống...</h5>
+        <style>
+            .loading-container {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                background: radial-gradient(circle, #112240 0%, #0a192f 100%);
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                color: white;
+            }
+
+            .logo-loader {
+                position: relative;
+                width: 120px;
+                height: 120px;
+                margin-bottom: 30px;
+            }
+
+            /* Vòng tròn xoay bên ngoài */
+            .loader-ring {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                border: 3px solid transparent;
+                border-top: 3px solid #c5a059;
+                border-radius: 50%;
+                animation: spin 1.5s linear infinite;
+            }
+
+                .loader-ring:before {
+                    content: "";
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    right: 10px;
+                    bottom: 10px;
+                    border: 2px solid transparent;
+                    border-top: 2px solid rgba(197, 160, 89, 0.5);
+                    border-radius: 50%;
+                    animation: spin 3s linear infinite;
+                }
+
+            .logo-img {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 70px;
+                filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.5));
+            }
+
+            /* Hiệu ứng chữ loading sang trọng */
+            .loading-text {
+                text-transform: uppercase;
+                letter-spacing: 4px;
+                font-size: 0.9rem;
+                font-weight: 700;
+                color: #c5a059;
+                background: linear-gradient(90deg, #0a192f, #fff, #0a192f);
+                background-repeat: no-repeat;
+                background-size: 80%;
+                animation: shimmer 2.5s linear infinite;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: rgba(197, 160, 89, 0.3);
+            }
+
+            .sub-text {
+                margin-top: 10px;
+                color: #8892b0;
+                font-size: 0.75rem;
+                font-style: italic;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            @keyframes shimmer {
+                0% {
+                    background-position: -500%;
+                }
+
+                100% {
+                    background-position: 500%;
+                }
+            }
+        </style>
+
+        <div class="loading-container">
+            <div class="logo-loader">
+                <div class="loader-ring"></div>
+                <img src="/Images/Logo_hoc_vien_ANND.png" class="logo-img" alt="Logo">
+            </div>
+            <div class="loading-text">Khoa An ninh nội bộ</div>
+            <div class="sub-text">Hệ thống đang khởi tạo tri thức...</div>
         </div>
     </div>
 
@@ -120,6 +229,16 @@
             URL.revokeObjectURL(url);
         }
     </script>
+    <script>
+        window.copyToClipboard = async (text) => {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (error) {
+                console.error("Lỗi copy: ", error);
+                return false;
+            }
+        }
+    </script>
 </body>
-
 </html>

@@ -4,17 +4,27 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Khoa An ninh nội địa</title>
+    <title>Khoa An ninh Chính trị Nội bộ - Học viện ANND</title>
     <base href="/" />
+
+   
     <link rel="stylesheet" href="/css/bootstrap/bootstrap.min.css" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+   
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 </head>
 
 <body>
     <div id="app">
         <div class="d-flex flex-column justify-content-center align-items-center vh-100 bg-light">
             <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;"></div>
-            <h5 class="mt-3 text-secondary fw-bold text-uppercase">Đang tải hệ thống...</h5>
+            <h5 class="mt-3 text-secondary fw-bold text-uppercase">Đang tải ...</h5>
         </div>
     </div>
 
@@ -120,6 +130,16 @@
             URL.revokeObjectURL(url);
         }
     </script>
+    <script>
+        window.copyToClipboard = async (text) => {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (error) {
+                console.error("Lỗi copy: ", error);
+                return false;
+            }
+        }
+    </script>
 </body>
-
 </html>

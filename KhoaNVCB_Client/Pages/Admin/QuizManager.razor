@@ -149,9 +149,19 @@
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr class="border-bottom border-dark border-2">
-                            <th style="width: 65%;">Nội dung câu hỏi</th>
+                            <th style="width: 50px;">
+                                <input type="checkbox" class="form-check-input" @onchange="ToggleSelectAll" checked="@isAllSelected" />
+                            </th>
+                            <th style="width: 60%;">Nội dung câu hỏi</th>
                             <th class="text-center">Đáp án đúng</th>
-                            <th class="text-center" style="width: 120px;">Thao tác</th>
+                            <th class="text-end">
+                                @if (selectedQuestionIds.Any())
+                                {
+                                    <button class="btn btn-sm btn-danger fw-bold" @onclick="DeleteSelectedQuestions">
+                                        XÓA (@selectedQuestionIds.Count)
+                                    </button>
+                                }
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -172,6 +182,11 @@
                             @foreach (var q in questions)
                             {
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input"
+                                               checked="@selectedQuestionIds.Contains(q.QuestionId)"
+                                               @onchange="@(e => OnQuestionSelectChange(q.QuestionId, e))" />
+                                    </td>
                                     <td>
                                         <div class="fw-bold mb-1" style="color: #2c3e50;">@q.Content</div>
                                         <div class="small text-muted" style="font-size: 0.8rem;">
@@ -300,9 +315,9 @@
                     <p class="text-muted fs-5 mb-4">Học viên quét mã QR bên dưới hoặc truy cập đường link để vào phòng thi</p>
 
                     @* MÃ QR SIÊU TO KHỔNG LỒ *@
-                    <div class="bg-white p-3 rounded-4 shadow-sm d-inline-block mb-4 border border-2">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=@Uri.EscapeDataString(generatedJoinLink)" alt="QR Code" style="width: 280px; height: 280px;" />
-                    </div>
+                    @* <div class="bg-white p-3 rounded-4 shadow-sm d-inline-block mb-4 border border-2"> *@
+                    @*     <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=@Uri.EscapeDataString(generatedJoinLink)" alt="QR Code" style="width: 280px; height: 280px;" /> *@
+                    @* </div> *@
 
                     @* MÃ CODE DÀNH CHO AI NHẬP TAY *@
                     <div class="display-3 fw-bold text-dark mb-4" style="letter-spacing: 8px;">
@@ -437,6 +452,7 @@
     // --- CÁC HÀM CŨ GIỮ NGUYÊN (LoadQuestions, HandleFileSelected, UploadExcel, SaveQuestion, DeleteQuestion) ---
     private async Task LoadQuestions()
     {
+        selectedQuestionIds.Clear(); // Thêm dòng này
         if (selectedCategoryId > 0)
         {
             questions = null;
@@ -543,4 +559,69 @@
             }
         }
     }
+
+    private List<int> selectedQuestionIds = new();
+    private bool isAllSelected => questions != null && questions.Any() && selectedQuestionIds.Count == questions.Count;
+
+    // Xử lý khi chọn/bỏ chọn từng câu
+    private void OnQuestionSelectChange(int questionId, ChangeEventArgs e)
+    {
+        bool isChecked = (bool)(e.Value ?? false);
+        if (isChecked)
+        {
+            if (!selectedQuestionIds.Contains(questionId))
+                selectedQuestionIds.Add(questionId);
+        }
+        else
+        {
+            selectedQuestionIds.Remove(questionId);
+        }
+    }
+
+    // Xử lý chọn tất cả/bỏ chọn tất cả
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        bool isChecked = (bool)(e.Value ?? false);
+        if (isChecked && questions != null)
+        {
+            selectedQuestionIds = questions.Select(q => q.QuestionId).ToList();
+        }
+        else
+        {
+            selectedQuestionIds.Clear();
+        }
+    }
+
+    // Gọi API xóa hàng loạt
+    private async Task DeleteSelectedQuestions()
+    {
+        if (!selectedQuestionIds.Any()) return;
+
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Bạn có chắc chắn muốn xóa vĩnh viễn {selectedQuestionIds.Count} câu hỏi đã chọn không?");
+        if (confirmed)
+        {
+            try
+            {
+                // Lưu ý: Bạn cần thêm phương thức DeleteQuestionsAsync (nhận List<int>) vào QuizService
+                var success = await QuizService.DeleteQuestionsBulkAsync(selectedQuestionIds);
+                if (success)
+                {
+                    selectedQuestionIds.Clear();
+                    await LoadQuestions();
+                    await JS.InvokeVoidAsync("alert", "Đã xóa thành công các câu hỏi được chọn.");
+                }
+                else
+                {
+                    await JS.InvokeVoidAsync("alert", "Có lỗi xảy ra trong quá trình xóa.");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", "Lỗi: " + ex.Message);
+            }
+        }
+    }
+
+    // Cập nhật lại hàm LoadQuestions để reset list chọn khi đổi chuyên mục
+    
 }

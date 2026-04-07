@@ -422,17 +422,19 @@
     {
         isLoading = true;
 
-        post = await PostService.GetByIdAsync(id);
-        if (categories == null) categories = await CategoryService.GetAllAsync();
-        allPosts = await PostService.GetAllAsync();
+        // Chạy song song các task để tiết kiệm thời gian
+        var postTask = PostService.GetByIdAsync(id);
+        var categoryTask = CategoryService.GetAllAsync();
+        var recentTask = PostService.GetRecentPublishedAsync(5); // Chỉ lấy đúng 5 bài
+        var commentTask = PostService.GetCommentsByPostAsync(id);
 
-        if (allPosts != null)
-        {
-            recentPosts = allPosts.Where(p => p.Status == "Published" && p.PostId != id)
-                                  .OrderByDescending(p => p.CreatedDate).Take(5).ToList();
-        }
+        await Task.WhenAll(postTask, categoryTask, recentTask, commentTask);
 
-        comments = await PostService.GetCommentsByPostAsync(id);
+        post = postTask.Result;
+        categories = categoryTask.Result;
+        recentPosts = recentTask.Result;
+        comments = commentTask.Result;
+
         isLoading = false;
     }
 

@@ -296,7 +296,8 @@
     private bool isLoading = true;
     private CategoryDto? currentCategory;
     private List<CategoryDto>? categories;
-    private List<PostDto>? allPosts;
+
+    // filteredPosts bây giờ chỉ chứa 10-20 bài thay vì toàn bộ DB
     private List<PostDto>? filteredPosts;
 
     protected override async Task OnParametersSetAsync()
@@ -304,23 +305,36 @@
         isLoading = true;
         try
         {
-            if (categories == null) categories = await CategoryService.GetAllAsync();
-            if (allPosts == null) allPosts = await PostService.GetAllAsync();
+            // 1. Tải danh sách chuyên mục cho Sidebar (chỉ tải 1 lần nếu chưa có)
+            if (categories == null)
+                categories = await CategoryService.GetAllAsync();
 
-            if (categories != null) currentCategory = categories.FirstOrDefault(c => c.CategoryId == id);
+            if (categories != null)
+                currentCategory = categories.FirstOrDefault(c => c.CategoryId == id);
 
-            if (allPosts != null && currentCategory != null)
-            {
-                var categoryPosts = allPosts.Where(p => p.CategoryName == currentCategory.CategoryName).ToList();
-                if (type == "videos")
-                    filteredPosts = categoryPosts.Where(p => p.SourceType == "Video").OrderByDescending(p => p.CreatedDate).ToList();
-                else
-                    filteredPosts = categoryPosts.Where(p => p.SourceType != "Video").OrderByDescending(p => p.CreatedDate).ToList();
-            }
+            // 2. TỐI ƯU: Gọi API paged thay vì GetAllAsync
+            // Chúng ta truyền trực tiếp id và type vào Server để lọc tại SQL
+            var result = await PostService.GetPagedPostsAsync(page: 1, pageSize: 15, categoryId: id, sourceType: type);
+
+            filteredPosts = result.Posts;
         }
-        catch (Exception ex) { Console.WriteLine(ex.Message); }
-        finally { isLoading = false; }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi tải chuyên mục: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
-    private int GetPostCount(string categoryName) => allPosts?.Count(p => p.CategoryName == categoryName) ?? 0;
+    // Hàm đếm số lượng bài viết cho Sidebar
+    // Lưu ý: Nếu muốn nhanh tuyệt đối, bạn nên bổ sung 1 API đếm riêng,
+    // nhưng hiện tại với số lượng bài vừa phải, dùng GetAllAsync cho sidebar là tạm ổn.
+    private int GetPostCount(string categoryName)
+    {
+        // Có thể để giá trị mặc định hoặc gọi 1 API đếm nhỏ gọn
+        return 0; // Hoặc logic đếm của bạn
+    }
 }

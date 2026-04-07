@@ -61,40 +61,40 @@
                 },
                 plugins: 'image link media table lists wordcount',
                 toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | image media table link',
-                images_upload_handler: async (blobInfo) => {
+                images_upload_handler: (blobInfo, progress) => new Promise(async (resolve, reject) => {
                     const formData = new FormData();
                     formData.append('file', blobInfo.blob(), blobInfo.filename());
 
-                    // --- MỚI THÊM: LẤY TOKEN ĐĂNG NHẬP TỪ TRÌNH DUYỆT ---
-                    // Duy kiểm tra xem web đang dùng key là gì nhé (thường là authToken, token, hoặc jwt)
                     let token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-
-                    // Blazor thường lưu string kèm dấu ngoặc kép, ta cần xóa ngoặc kép đi để API không báo lỗi
                     if (token) token = token.replace(/^"(.*)"$/, '$1');
 
                     try {
-                        //const response = await fetch('https://localhost:7240/api/Photos', {
-                        const response = await fetch('https://khoanvcb-api.onrender.com/api/Photos', {
+                        const response = await fetch('https://khoanv4-api.onrender.com/api/Photos', {
                             method: 'POST',
                             body: formData,
-                            // ĐÍNH KÈM TOKEN VÀO YÊU CẦU
                             headers: {
                                 'Authorization': `Bearer ${token}`
                             }
                         });
 
                         if (!response.ok) {
-                            console.error(`Lỗi từ server: ${response.status}`);
-                            return ''; // Trả về rỗng để Editor biết là thất bại
+                            const errorData = await response.json();
+                            reject(`Lỗi ${response.status}: ${errorData.message || 'Không thể upload'}`);
+                            return;
                         }
 
                         const result = await response.json();
-                        return result.url; // Trả về link Cloudinary
+
+                        // TinyMCE 7 cần resolve một string là URL của ảnh
+                        if (result && result.location) {
+                            resolve(result.location);
+                        } else {
+                            reject("Phản hồi từ Server thiếu trường 'location'");
+                        }
                     } catch (e) {
-                        console.error('Lỗi upload ảnh:', e);
-                        return '';
+                        reject('Lỗi kết nối mạng hoặc Server: ' + e.message);
                     }
-                }
+                })
             });
         };
 

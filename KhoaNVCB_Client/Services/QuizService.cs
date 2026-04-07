@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text.Json;
 using KhoaNVCB_Client.Models;
 
@@ -6,6 +7,7 @@ namespace KhoaNVCB_Client.Services
 {
     public class QuizService
     {
+
         private readonly HttpClient _http;
 
         public QuizService(HttpClient http)
@@ -44,7 +46,11 @@ namespace KhoaNVCB_Client.Services
             if (response.IsSuccessStatusCode) return "Success";
             return await response.Content.ReadAsStringAsync();
         }
-
+        public async Task<bool> DeleteQuestionsBulkAsync(List<int> ids)
+        {
+            var response = await _http.PostAsJsonAsync("api/Quizzes/questions/bulk-delete", ids);
+            return response.IsSuccessStatusCode;
+        }
         // Lấy danh sách câu hỏi ngẫu nhiên theo chuyên đề (hoặc tất cả nếu categoryId = 0)
         public async Task<List<QuestionDto>> GetRandomQuestionsAsync(int categoryId)
         {

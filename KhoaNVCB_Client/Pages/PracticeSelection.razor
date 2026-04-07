@@ -1,0 +1,145 @@
+﻿@page "/practice-setup"
+@using KhoaNVCB_Client.Models
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
+                <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="text-center text-white">
+                        <i class="bi bi-journal-check mb-2" style="font-size: 2.5rem;"></i>
+                        <h3 class="fw-extrabold mb-0" style="letter-spacing: 1px;">CẤU HÌNH ÔN TẬP</h3>
+                        <p class="small opacity-75 mb-0">Tùy chỉnh lộ trình học tập của riêng bạn</p>
+                    </div>
+                </div>
+
+                <div class="card-body p-4 p-md-5 bg-light">
+                    @if (categories == null)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-grow text-primary" role="status"></div>
+                            <p class="text-muted mt-3 fw-medium">Đang chuẩn bị dữ liệu...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary mb-3">
+                                <i class="bi bi-tag-fill me-2"></i>1. Chọn chủ đề ôn tập
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
+                                    <i class="bi bi-search text-muted"></i>
+                                </span>
+                                <select class="form-select form-select-lg border-start-0 shadow-none"
+                                        style="border-radius: 0 12px 12px 0; font-size: 1rem;"
+                                        @bind="selectedCategoryId">
+                                    <option value="0">Tất cả chủ đề</option>
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.CategoryId">@cat.CategoryName</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold text-secondary mb-3">
+                                <i class="bi bi-list-ol me-2"></i>2. Số lượng câu hỏi
+                            </label>
+                            <div class="row g-2">
+                                @foreach (var num in new[] { 10, 20, 30, 50 })
+                                {
+                                    <div class="col-3">
+                                        <input type="radio" class="btn-check" name="countOptions" id="btn-@num"
+                                               value="@num" checked="@(selectedCount == num)"
+                                               @onclick="() => selectedCount = num">
+                                        <label class="btn btn-outline-primary w-100 py-3 rounded-4 transition-all" for="btn-@num">
+                                            <span class="d-block fs-4">@num</span>
+                                            <span class="small uppercase" style="font-size: 0.7rem;">CÂU</span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="p-3 rounded-4 bg-white border mb-4 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-box me-3 bg-info-subtle text-info rounded-circle px-2 py-1">
+                                    <i class="bi bi-info-circle-fill"></i>
+                                </div>
+                                <div class="small text-muted">
+                                    Kết quả này dùng để luyện tập và sẽ <strong>không tính vào điểm số</strong> chính thức.
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-lg w-100 py-3 rounded-4 border-0 shadow-primary"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: transform 0.2s;"
+                                onmouseover="this.style.transform='scale(1.02)'"
+                                onmouseout="this.style.transform='scale(1)'"
+                                @onclick="StartPractice">
+                            <span class="fw-bold">BẮT ĐẦU NGAY</span>
+                            <i class="bi bi-arrow-right-short ms-2"></i>
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Custom CSS để bổ trợ */
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+
+    .btn-check:checked + .btn-outline-primary {
+        background: #764ba2 !important;
+        border-color: #764ba2 !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
+    }
+
+    .shadow-primary {
+        box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
+    }
+
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: none;
+    }
+</style>
+
+@code {
+    private List<CategoryDto>? categories; // Giả sử bạn đã có Model CategoryDto
+    private int selectedCategoryId = 0;
+    private int selectedCount = 20;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Gọi API lấy danh sách Category để đổ vào Dropdown
+            categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/Categories");
+        }
+        catch { /* Xử lý lỗi nếu cần */ }
+    }
+
+    private void StartPractice()
+    {
+        // Điều hướng sang trang Practice mà chúng ta đã làm ở bước trước
+        NavManager.NavigateTo($"/practice/{selectedCategoryId}/{selectedCount}");
+    }
+
+    // Class phụ để hứng dữ liệu Category
+    public class CategoryDto
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = "";
+    }
+}

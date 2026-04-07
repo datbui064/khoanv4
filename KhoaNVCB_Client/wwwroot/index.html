@@ -135,68 +135,65 @@
 
     <script src="_framework/blazor.webassembly.js"></script>
 
-    <script src="https://cdn.tiny.cloud/1/at9ypmn6yrrhnvzbpbc40fm7o68k7mvfqs2ky7iv76epc48k/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+    <script src="https://cdn.tiny.cloud/1/vct0kgaao8y3mqybgnrqup6bs1fqcvb75ez99u3klrycdd5z/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
     <script>
-        window.initTinyMCE = (dotNetHelper, content) => {
-            // Xóa sạch dấu vết cũ
-            if (tinymce.get('tiny-editor')) { tinymce.get('tiny-editor').remove(); }
-
+        // Đảm bảo hàm này nằm ngoài cùng, không bọc trong hàm nào khác
+        window.initTinyMCE = (dotNetRef, initialContent) => {
             tinymce.init({
                 selector: '#tiny-editor',
                 height: 500,
-                license_key: 'gpl', // Khai báo bản quyền mở cho TinyMCE 7
-                promotion: false,
-                branding: false,
-                setup: function (editor) {
-                    editor.on('init', function () {
-                        editor.setContent(content || "");
-                        editor.mode.set("design");
-                        console.log("✅ Editor đã thông chốt!");
+                plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
+                toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table | align lineheight | numlist bulletlist indent outdent | emoticons charmap | removeformat',
+
+                // Fix lỗi 'setup' bằng cách viết đúng cú pháp:
+                setup: (editor) => {
+                    editor.on('init', () => {
+                        editor.setContent(initialContent);
                     });
-                    editor.on('change', function () {
-                        dotNetHelper.invokeMethodAsync('UpdateContentFromJS', editor.getContent());
+                    editor.on('change', () => {
+                        dotNetRef.invokeMethodAsync('UpdateContentFromJS', editor.getContent());
                     });
                 },
-                plugins: 'image link media table lists wordcount',
-                toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist | image media table link',
-                images_upload_handler: async (blobInfo) => {
-                    const formData = new FormData();
-                    formData.append('file', blobInfo.blob(), blobInfo.filename());
 
-                    // --- MỚI THÊM: LẤY TOKEN ĐĂNG NHẬP TỪ TRÌNH DUYỆT ---
-                    // Duy kiểm tra xem web đang dùng key là gì nhé (thường là authToken, token, hoặc jwt)
-                    let token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
-
-                    // Blazor thường lưu string kèm dấu ngoặc kép, ta cần xóa ngoặc kép đi để API không báo lỗi
-                    if (token) token = token.replace(/^"(.*)"$/, '$1');
-
+                // Cấu hình Upload ảnh chuẩn
+                images_upload_handler: (blobInfo) => new Promise(async (resolve, reject) => {
                     try {
-                        //const response = await fetch('https://localhost:7240/api/Photos', {
-                        const response = await fetch('https://khoanvcb-api.onrender.com/api/Photos', {
+                        const formData = new FormData();
+                        formData.append('file', blobInfo.blob(), blobInfo.filename());
+
+                        let token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                        if (token) token = token.replace(/^"(.*)"$/, '$1');
+
+                        const response = await fetch('https://khoanv4-api.onrender.com/api/Photos', {
                             method: 'POST',
                             body: formData,
-                            // ĐÍNH KÈM TOKEN VÀO YÊU CẦU
                             headers: {
                                 'Authorization': `Bearer ${token}`
                             }
                         });
 
                         if (!response.ok) {
-                            console.error(`Lỗi từ server: ${response.status}`);
-                            return ''; // Trả về rỗng để Editor biết là thất bại
+                            const errorData = await response.json();
+                            reject(errorData.message || 'Upload thất bại');
+                            return;
                         }
 
                         const result = await response.json();
-                        return result.url; // Trả về link Cloudinary
-                    } catch (e) {
-                        console.error('Lỗi upload ảnh:', e);
-                        return '';
+                        resolve(result.location);
+                    } catch (error) {
+                        reject('Lỗi kết nối server');
                     }
-                }
+                })
             });
         };
 
+        // Hàm bổ trợ để set nội dung (dùng khi bóc tách Word)
+        window.setTinyMCEContent = (content) => {
+            if (tinymce.get('tiny-editor')) {
+                tinymce.get('tiny-editor').setContent(content);
+            }
+        };
         // Hàm đổ dữ liệu Word có giới hạn số lần thử để tránh treo máy
         let retryCount = 0;
         window.setTinyMCEContent = (content) => {

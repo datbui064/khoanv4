@@ -1,0 +1,203 @@
+﻿@page "/practice/{categoryId:int}/{count:int}"
+@using System.Text.Json
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Ôn Tập Kiến Thức</PageTitle>
+
+<div class="container py-5" style="max-width: 800px;">
+    @if (isLoading)
+    {
+        <div class="text-center py-5 mt-5">
+            <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+            <h4 class="mt-4 text-muted">Đang lấy bộ câu hỏi ngẫu nhiên...</h4>
+        </div>
+    }
+    else if (questions == null || !questions.Any())
+    {
+        <div class="alert alert-danger text-center">
+            <h4>Không tìm thấy câu hỏi!</h4>
+            <a href="/" class="btn btn-primary mt-3">Quay lại</a>
+        </div>
+    }
+    else if (!isFinished)
+    {
+        @* HEADER *@
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded-3 shadow-sm border-start border-primary border-4 sticky-top" style="top: 10px; z-index: 100;">
+            <div>
+                <h5 class="fw-bold m-0 text-primary">Chế độ: Ôn tập tự do</h5>
+                <small class="text-muted">Chủ đề: <strong>@categoryName</strong></small>
+            </div>
+            <div class="fw-bold fs-5 bg-light px-3 py-1 rounded-3 border">
+                Câu @(currentIndex + 1) / @questions.Count
+            </div>
+        </div>
+
+        @* NỘI DUNG CÂU HỎI *@
+        <div class="card shadow border-0 rounded-4 mb-4">
+            <div class="card-body p-4 p-md-5">
+                <h4 class="fw-bold lh-base mb-4 text-dark">@questions[currentIndex].GetProperty("content").GetString()</h4>
+
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var opt in new[] { "A", "B", "C", "D" })
+                    {
+                        var optionLetter = opt;
+                        var optionText = questions[currentIndex].GetProperty($"option{opt}").GetString();
+                        var qId = questions[currentIndex].GetProperty("questionId").GetInt32();
+
+                        <button class="btn @GetOptionClass(qId, optionLetter) text-start p-3 fw-semibold fs-5 rounded-3 transition-all"
+                                @onclick='() => SelectAnswer(qId, optionLetter)'
+                                disabled="@userAnswers.ContainsKey(qId)">
+                            <span class="badge bg-dark text-white me-2">@optionLetter</span> @optionText
+
+                            @* Hiển thị icon đúng/sai ngay lập tức *@
+                            @if (userAnswers.ContainsKey(qId))
+                            {
+                                var correct = questions[currentIndex].GetProperty("correctAnswer").GetString();
+                                if (optionLetter == correct)
+                                {
+                                    <i class="oi oi-check float-end text-success"></i>
+                                }
+                                else if (userAnswers[qId] == optionLetter)
+                                {
+                                    <i class="oi oi-x float-end text-danger"></i>
+                                }
+                            }
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* ĐIỀU HƯỚNG *@
+        <div class="d-flex justify-content-between">
+            <button class="btn btn-outline-secondary px-4 fw-bold" @onclick="Prev" disabled="@(currentIndex == 0)">
+                Câu trước
+            </button>
+
+            @if (currentIndex < questions.Count - 1)
+            {
+                <button class="btn btn-primary px-4 fw-bold" @onclick="Next">
+                    Câu tiếp theo
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-success px-5 fw-bold" @onclick="Finish">
+                    KẾT THÚC ÔN TẬP
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        @* KẾT QUẢ TẠM THỜI *@
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden text-center">
+            <div class="bg-primary text-white py-4">
+                <h2 class="fw-bold mb-0">HOÀN THÀNH ÔN TẬP</h2>
+            </div>
+            <div class="card-body p-5">
+                <div class="display-3 fw-bold text-primary mb-3">@score / @questions.Count</div>
+                <p class="fs-5 text-muted">Hệ thống không lưu kết quả này vào lịch sử thi.</p>
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                    <button class="btn btn-primary btn-lg px-4" @onclick="Restart">Ôn tập lượt mới</button>
+                    <a href="/" class="btn btn-outline-secondary btn-lg px-4">Về trang chủ</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .transition-all {
+        transition: all 0.2s ease;
+    }
+
+    /* Lớp khi đáp án ĐÚNG */
+    .btn-correct {
+        background-color: #d1e7dd !important;
+        border: 2px solid #198754 !important;
+        color: #0f5132 !important;
+    }
+
+    /* Lớp khi người dùng chọn SAI */
+    .btn-wrong {
+        background-color: #f8d7da !important;
+        border: 2px solid #dc3545 !important;
+        color: #842029 !important;
+    }
+
+    /* Lớp mặc định */
+    .btn-outline-dark:hover:not(:disabled) {
+        background-color: #f8f9fa;
+    }
+</style>
+
+@code {
+    [Parameter] public int categoryId { get; set; }
+    [Parameter] public int count { get; set; }
+
+    private List<JsonElement> questions = new();
+    private Dictionary<int, string> userAnswers = new();
+    private int currentIndex = 0;
+    private bool isLoading = true;
+    private bool isFinished = false;
+    private string categoryName = "";
+    private int score = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadQuestions();
+    }
+
+    private async Task LoadQuestions()
+    {
+        isLoading = true;
+        try
+        {
+            // Gọi đến Endpoint chúng ta vừa tạo ở Backend
+            var response = await Http.GetFromJsonAsync<JsonElement>($"api/Quizzes/practice/{categoryId}/{count}");
+            categoryName = response.GetProperty("categoryName").GetString() ?? "Chủ đề";
+            questions = response.GetProperty("questions").EnumerateArray().ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        finally { isLoading = false; }
+    }
+
+    private void SelectAnswer(int qId, string option)
+    {
+        if (!userAnswers.ContainsKey(qId))
+        {
+            userAnswers[qId] = option;
+
+            // Kiểm tra đúng sai để cộng điểm ngay
+            var correct = questions[currentIndex].GetProperty("correctAnswer").GetString();
+            if (option == correct) score++;
+        }
+    }
+
+    private string GetOptionClass(int qId, string option)
+    {
+        if (!userAnswers.ContainsKey(qId)) return "btn-outline-dark";
+
+        var correct = questions.FirstOrDefault(q => q.GetProperty("questionId").GetInt32() == qId)
+                               .GetProperty("correctAnswer").GetString();
+
+        // Nếu là đáp án đúng -> hiện xanh (bất kể user chọn gì để họ học)
+        if (option == correct) return "btn-correct";
+
+        // Nếu user chọn sai -> hiện đỏ cái user chọn
+        if (userAnswers[qId] == option && option != correct) return "btn-wrong";
+
+        return "btn-outline-dark opacity-50";
+    }
+
+    private void Next() => currentIndex++;
+    private void Prev() => currentIndex--;
+    private void Finish() => isFinished = true;
+    private void Restart() => Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+}

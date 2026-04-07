@@ -17,7 +17,7 @@
                 <a href="/" class="text-decoration-none d-flex align-items-center flex-grow-1" @onclick="CloseMobileMenu">
                     <img src="/Images/logo-cand-bg.png" alt="Logo NV4" class="flex-shrink-0" style="height: 45px; margin-right: 10px; object-fit: contain;" />
                     <span class="fw-bold text-uppercase d-none d-sm-inline" style="color: #b71c1c; font-size: 1.3rem;">KHOA AN NINH CHÍNH TRỊ NỘI BỘ</span>
-                    <span class="fw-bold text-uppercase d-sm-none" style="color: #b71c1c; font-size: 1.1rem;">KHOA NV3</span>
+                    <span class="fw-bold text-uppercase d-sm-none" style="color: #b71c1c; font-size: 1.1rem;">KHOA NV4</span>
                 </a>
 
                 <button class="btn btn-outline-danger d-md-none" @onclick="ToggleMobileMenu" style="padding: 4px 8px; border-width: 2px;">
@@ -29,7 +29,7 @@
 
             @* --- KHỐI THANH ĐIỀU HƯỚNG (NAV) --- *@
             <nav class="@(isMobileMenuOpen ? "mobile-menu-open" : "d-none") d-md-flex gap-4 align-items-center">
-                <a href="/about" class="nav-link-custom text-uppercase" @onclick="CloseMobileMenu">Giới thiệu</a>
+                
 
                 <div class="dropdown dropdown-hover position-relative">
                     <a href="#" class="nav-link-custom text-uppercase d-flex align-items-center pb-2 mb-n2">
@@ -78,6 +78,9 @@
                         }
                     </ul>
                 </div>
+                <a href="/posts" class="nav-link-custom text-uppercase" @onclick="CloseMobileMenu">Tài Liệu</a>
+                <a href="/practice-setup" class="nav-link-custom text-uppercase" @onclick="CloseMobileMenu">Ôn Tập</a>
+                <a href="/about" class="nav-link-custom text-uppercase" @onclick="CloseMobileMenu">Giới thiệu</a>
 
                 <AuthorizeView>
                     <Authorized>
@@ -94,7 +97,7 @@
                         <a href="javascript:void(0)" @onclick="HandleLogout" class="nav-link-custom text-uppercase text-danger ms-2">ĐĂNG XUẤT</a>
                     </Authorized>
                     <NotAuthorized>
-                        <a href="/login" class="nav-link-custom text-uppercase text-secondary" @onclick="CloseMobileMenu">Quản trị</a>
+                        <a href="/login" class="nav-link-custom text-uppercase text-secondary" @onclick="CloseMobileMenu">Đăng Nhập</a>
                     </NotAuthorized>
                 </AuthorizeView>
             </nav>

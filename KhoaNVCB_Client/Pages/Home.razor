@@ -10,7 +10,7 @@
 
 @* --- HERO SECTION HIỆN ĐẠI --- *@
 <div class="hero-wrapper">
-    <video autoplay loop muted playsinline class="hero-video" poster="/Images/Logo_hoc_vien_ANND.png">
+    <video autoplay loop muted playsinline class="hero-video" poster="/Images/Logo_hoc_vien_ANND.png" preload="metadata">
         <source src="/Images/video-nen-2.mp4" type="video/mp4">
     </video>
     <div class="hero-glass-overlay">
@@ -23,19 +23,18 @@
                 Kết nối lý luận khoa học và thực tiễn chiến đấu.
             </p>
             <div class="mt-4 d-flex justify-content-center gap-3">
-                <a href="/categories" class="btn btn-gold btn-lg px-4 fw-bold">Khám phá tài liệu</a>
-                <a href="#featured-posts" class="btn btn-outline-light btn-lg px-4">Tin tức mới nhất</a>
+                <a href="/posts" class="btn btn-gold btn-lg px-4 fw-bold">Khám phá tài liệu</a>
             </div>
         </div>
     </div>
 </div>
 
 <div class="container mt-n5 position-relative z-index-3">
-    @* --- STATS BAR (Điểm nhấn hiện đại) --- *@
+    @* --- STATS BAR --- *@
     <div class="row g-0 shadow-lg rounded-4 overflow-hidden bg-white text-center mb-5 border">
         <div class="col-md-4 p-4 border-end">
             <h3 class="fw-bold text-navy mb-0">1,200+</h3>
-            <small class="text-muted text-uppercase fw-semibold">Tài liệu nghiệp vụ</small>
+            <small class="text-muted text-uppercase fw-semibold">Tài liệu nghiên cứu </small>
         </div>
         <div class="col-md-4 p-4 border-end">
             <h3 class="fw-bold text-navy mb-0">50+</h3>
@@ -51,40 +50,56 @@
     <section id="featured-posts" class="mb-5">
         <div class="section-header d-flex justify-content-between align-items-end mb-4">
             <div>
-                <h2 class="section-title">Tin tức nổi bật</h2>
+                <h2 class="section-title text-navy fw-800">Tin tức nổi bật</h2>
                 <div class="section-underline"></div>
             </div>
-            <a href="/posts" class="text-navy fw-bold text-decoration-none">Xem tất cả <i class="oi oi-arrow-right"></i></a>
+            <a href="/posts" class="view-all-link">Xem tất cả <i class="oi oi-arrow-right ms-1"></i></a>
         </div>
 
-        @if (recentPosts == null)
+        @if (isLoading)
         {
-            <div class="text-center py-5"><div class="spinner-grow text-navy" role="status"></div></div>
+            <div class="post-list-container">
+                @for (int i = 0; i < 3; i++)
+                {
+                    <div class="skeleton-loader-item mb-3">
+                        <div class="skeleton-img"></div>
+                        <div class="skeleton-text">
+                            <div class="line"></div>
+                            <div class="line short"></div>
+                        </div>
+                    </div>
+                }
+            </div>
         }
-        else
+        else if (recentPosts != null && recentPosts.Any())
         {
             <div class="post-list-container">
                 @foreach (var post in recentPosts)
                 {
                     <div class="modern-post-list-item">
                         <div class="post-list-thumb">
-                            <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : post.ImageUrl)" alt="@post.Title" />
-                            <span class="post-category-tag">@(post.CategoryName ?? "Mới")</span>
+                            <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
+                                 alt="@post.Title" loading="lazy" />
+                            <div class="post-category-tag">@(post.CategoryName ?? "Tin mới")</div>
                         </div>
+
                         <div class="post-list-body">
                             <div class="post-list-meta">
-                                <span class="meta-item"><i class="oi oi-calendar"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")</span>
-                                <span class="meta-item"><i class="oi oi-person"></i> Ban Biên Tập</span>
+                                <span class="meta-item"><i class="oi oi-calendar me-1"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")</span>
+                                <span class="meta-item"><i class="oi oi-person me-1"></i> Ban Biên Tập</span>
                             </div>
+
                             <h4 class="post-list-title">
                                 <a href="/post/@post.PostId">@post.Title</a>
                             </h4>
+
                             <p class="post-list-excerpt">
                                 @(post.Summary ?? "Bản tin cập nhật những kiến thức mới nhất về công tác an ninh chính trị nội bộ và thực tiễn chiến đấu...")
                             </p>
+
                             <div class="post-list-footer">
                                 <a href="/post/@post.PostId" class="read-more-link">
-                                    Đọc chi tiết <i class="oi oi-chevron-right"></i>
+                                    Đọc chi tiết <i class="oi oi-chevron-right ms-1"></i>
                                 </a>
                             </div>
                         </div>
@@ -94,7 +109,7 @@
         }
     </section>
 
-    @* --- CHUYÊN MỤC TÀI LIỆU (GRID LAYOUT MỚI) --- *@
+    @* --- CHUYÊN MỤC TÀI LIỆU --- *@
     <section class="mb-5 py-4">
         <div class="text-center mb-5">
             <h2 class="section-title mx-auto">Chuyên mục tài liệu</h2>
@@ -113,9 +128,6 @@
                             </div>
                             <div class="category-overlay"></div>
                             <div class="category-content">
-                                
-                                @* ----------------------------- *@
-
                                 <h4 class="category-name">@cat.CategoryName</h4>
                                 <div class="category-details">
                                     <p>Khám phá kho tài liệu nghiệp vụ chuyên sâu về @(cat.CategoryName?.ToLower() ?? "chuyên mục này").</p>
@@ -129,6 +141,7 @@
         }
     </section>
 </div>
+
 @* --- SECTION: ĐỘI NGŨ GIẢNG VIÊN & CHUYÊN GIA --- *@
 <section class="faculty-section py-5 px-3">
     <div class="container">
@@ -140,14 +153,13 @@
         </div>
 
         <div class="row g-4">
-            @* Giảng viên 1 *@
             <div class="col-xl-3 col-lg-4 col-md-6">
                 <div class="faculty-card">
                     <div class="faculty-image">
                         <img src="/Images/Logo_hoc_vien_ANND.png" alt="Giảng viên" />
                         <div class="faculty-socials">
-                            <a href="#"><i class="fa-solid fa-envelope"></i></a>
-                            <a href="#"><i class="fa-solid fa-graduation-cap"></i></a>
+                            <a href="#"><i class="oi oi-envelope-closed"></i></a>
+                            <a href="#"><i class="oi oi-book"></i></a>
                         </div>
                     </div>
                     <div class="faculty-info text-center p-4">
@@ -162,59 +174,11 @@
                     </div>
                 </div>
             </div>
-
-            @* Giảng viên 2 *@
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="faculty-card">
-                    <div class="faculty-image">
-                        <img src="/Images/Logo_hoc_vien_ANND.png" alt="Giảng viên" />
-                        <div class="faculty-socials">
-                            <a href="#"><i class="fa-solid fa-envelope"></i></a>
-                            <a href="#"><i class="fa-solid fa-graduation-cap"></i></a>
-                        </div>
-                    </div>
-                    <div class="faculty-info text-center p-4">
-                        <h5 class="faculty-name">TS. TRẦN THỊ B</h5>
-                        <p class="faculty-rank">Giảng viên Chính - Phó Trưởng Khoa</p>
-                        <hr class="short-hr mx-auto">
-                        <p class="faculty-bio">Nghiên cứu chuyên sâu về các phương thức thủ đoạn mới của các thế lực thù địch hiện nay.</p>
-                        <div class="faculty-tags">
-                            <span class="badge bg-light text-navy border">Thực tiễn</span>
-                            <span class="badge bg-light text-navy border">Đối ngoại</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @* Bạn có thể copy thêm các khối tương tự cho Giảng viên 3, 4... *@
-            @* Giảng viên 3 *@
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="faculty-card">
-                    <div class="faculty-image">
-                        <img src="/Images/Logo_hoc_vien_ANND.png" alt="Giảng viên" />
-                        <div class="faculty-socials">
-                            <a href="#"><i class="fa-solid fa-envelope"></i></a>
-                            <a href="#"><i class="fa-solid fa-graduation-cap"></i></a>
-                        </div>
-                    </div>
-                    <div class="faculty-info text-center p-4">
-                        <h5 class="faculty-name">THS. LÊ VĂN C</h5>
-                        <p class="faculty-rank">Giảng viên nghiệp vụ</p>
-                        <hr class="short-hr mx-auto">
-                        <p class="faculty-bio">Dày dạn kinh nghiệm thực tế chiến đấu tại các địa bàn trọng điểm về an ninh nội bộ.</p>
-                        <div class="faculty-tags">
-                            <span class="badge bg-light text-navy border">Kỹ năng</span>
-                            <span class="badge bg-light text-navy border">Địa bàn</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @* Giảng viên 4 *@
+            @* Bạn có thể thêm Giảng viên 2, 3 tương tự *@
             <div class="col-xl-3 col-lg-4 col-md-6">
                 <div class="faculty-card h-100 d-flex flex-column justify-content-center align-items-center border-dashed p-4">
                     <div class="add-expert-circle mb-3">
-                        <i class="fa-solid fa-users-viewfinder"></i>
+                        <i class="oi oi-people"></i>
                     </div>
                     <h6 class="text-muted fw-bold">Và hơn 20 giảng viên</h6>
                     <p class="small text-center text-muted">Đang trực tiếp giảng dạy tại Khoa</p>
@@ -225,441 +189,17 @@
     </div>
 </section>
 
-
 <style>
-    /* FACULTY SECTION STYLES */
-    .faculty-section {
-        background-color: #fcfdfe;
-    }
-
-    .bg-gold-light {
-        background-color: rgba(197, 160, 89, 0.15);
-    }
-
-    .text-gold {
-        color: #c5a059 !important;
-    }
-
-    .faculty-card {
-        background: #fff;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(10, 25, 47, 0.05);
-        transition: all 0.4s ease;
-        height: 100%;
-        border: 1px solid rgba(0,0,0,0.03);
-    }
-
-        .faculty-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(10, 25, 47, 0.12);
-        }
-
-    .faculty-image {
-        position: relative;
-        height: 250px;
-        overflow: hidden;
-        background-color: #f8f9fa;
-    }
-
-        .faculty-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain; /* Phù hợp với ảnh logo Học viện ANND của bạn */
-            padding: 30px;
-            transition: transform 0.5s ease;
-        }
-
-    .faculty-card:hover .faculty-image img {
-        transform: scale(1.1);
-    }
-
-    /* Hiệu ứng trượt mạng xã hội khi hover */
-    .faculty-socials {
-        position: absolute;
-        bottom: -50px;
-        left: 0;
-        width: 100%;
-        height: 50px;
-        background: rgba(10, 25, 47, 0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 20px;
-        transition: bottom 0.3s ease;
-    }
-
-    .faculty-card:hover .faculty-socials {
-        bottom: 0;
-    }
-
-    .faculty-socials a {
-        color: #c5a059;
-        font-size: 1.1rem;
-        transition: color 0.2s;
-    }
-
-        .faculty-socials a:hover {
-            color: #fff;
-        }
-
-    .faculty-info {
-        background: white;
-    }
-
-    .faculty-name {
-        color: #0a192f;
-        font-weight: 800;
-        font-size: 1rem;
-        margin-bottom: 5px;
-    }
-
-    .faculty-rank {
-        color: #c5a059;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .short-hr {
-        width: 30px;
-        height: 2px;
-        background-color: #eee;
-        border: 0;
-        margin: 15px 0;
-    }
-
-    .faculty-bio {
-        font-size: 0.85rem;
-        color: #666;
-        line-height: 1.5;
-        height: 60px; /* Giữ các card đều nhau */
-        overflow: hidden;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-    }
-
-    .faculty-tags {
-        display: flex;
-        justify-content: center;
-        gap: 5px;
-        margin-top: 15px;
-    }
-
-    /* Dành cho card "Xem thêm" */
-    .border-dashed {
-        border: 2px dashed #ddd !important;
-        border-radius: 20px;
-        background: transparent !important;
-    }
-
-    .add-expert-circle {
-        width: 60px;
-        height: 60px;
-        background: #f0f2f5;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        color: #ccc;
-    }
-
-    .btn-outline-gold {
-        border-color: #c5a059;
-        color: #c5a059;
-        border-radius: 20px;
-        font-weight: 600;
-    }
-
-        .btn-outline-gold:hover {
-            background-color: #c5a059;
-            color: white;
-        }
-    /* CATEGORY LUXURY CARD */
-    .category-luxury-card {
-        position: relative;
-        display: block;
-        height: 320px;
-        border-radius: 20px;
-        overflow: hidden;
-        text-decoration: none !important;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-        transition: all 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    .category-image {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-    }
-
-        .category-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.8s ease;
-        }
-
-    /* Lớp phủ Gradient đa tầng */
-    .category-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to bottom, rgba(10, 25, 47, 0.2) 0%, rgba(10, 25, 47, 0.8) 100%);
-        z-index: 2;
-        transition: opacity 0.5s ease;
-    }
-
-    .category-content {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        padding: 30px;
-        z-index: 3;
-        color: white;
-        transform: translateY(60px); /* Đẩy nội dung xuống một chút */
-        transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    .category-icon {
-        width: 45px;
-        height: 45px;
-        background: var(--gold-accent);
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 15px;
-        font-size: 1.2rem;
-        box-shadow: 0 8px 15px rgba(197, 160, 89, 0.3);
-    }
-
-    .category-name {
-        font-weight: 800;
-        font-size: 1.4rem;
-        margin-bottom: 10px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-
-    .category-details {
-        opacity: 0;
-        transition: opacity 0.4s ease;
-    }
-
-        .category-details p {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.8);
-            margin-bottom: 20px;
-            line-height: 1.5;
-        }
-
-    .category-link {
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: var(--gold-accent);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-
-    /* HOVER EFFECTS */
-    .category-luxury-card:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 25px 50px rgba(10, 25, 47, 0.3);
-    }
-
-        .category-luxury-card:hover .category-image img {
-            transform: scale(1.15); /* Phóng to ảnh nền */
-        }
-
-        .category-luxury-card:hover .category-content {
-            transform: translateY(0); /* Đẩy nội dung lên */
-        }
-
-        .category-luxury-card:hover .category-details {
-            opacity: 1; /* Hiện chi tiết */
-        }
-
-        .category-luxury-card:hover .category-overlay {
-            background: linear-gradient(to bottom, rgba(197, 160, 89, 0.1) 0%, rgba(10, 25, 47, 0.95) 100%);
-        }
-
-    /* Mobile Tweak */
-    @@media (max-width: 768px) {
-        .category-content
-
-    {
-        transform: translateY(0);
-    }
-
-    .category-details {
-        opacity: 1;
-    }
-
-    .category-luxury-card {
-        height: 280px;
-    }
-
-    }
-    /* CONTAINER CHO DẠNG LIST */
-    .post-list-container {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .modern-post-list-item {
-        display: grid;
-        grid-template-columns: 280px 1fr; /* Tách ảnh và nội dung */
-        background: #fff;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        border: 1px solid rgba(0,0,0,0.05);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-    }
-
-        .modern-post-list-item:hover {
-            transform: translateX(8px); /* Hiệu ứng trượt nhẹ sang phải */
-            box-shadow: 0 10px 25px rgba(10, 25, 47, 0.08);
-            border-left: 4px solid var(--gold-accent);
-        }
-
-    /* THUMBNAIL TRONG LIST */
-    .post-list-thumb {
-        position: relative;
-        height: 180px;
-        overflow: hidden;
-    }
-
-        .post-list-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.5s ease;
-        }
-
-    .modern-post-list-item:hover .post-list-thumb img {
-        transform: scale(1.05);
-    }
-
-    .post-category-tag {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        background: var(--gold-accent);
-        color: white;
-        padding: 3px 12px;
-        border-radius: 4px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-    }
-
-    /* NỘI DUNG */
-    .post-list-body {
-        padding: 20px 30px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    .post-list-meta {
-        font-size: 0.8rem;
-        color: var(--text-gray);
-        margin-bottom: 10px;
-        display: flex;
-        gap: 15px;
-    }
-
-    .meta-item i {
-        color: var(--gold-accent);
-        margin-right: 5px;
-    }
-
-    .post-list-title {
-        margin-bottom: 12px;
-        line-height: 1.4;
-    }
-
-        .post-list-title a {
-            color: var(--navy-dark);
-            text-decoration: none;
-            font-weight: 700;
-            font-size: 1.25rem;
-            transition: color 0.2s;
-        }
-
-            .post-list-title a:hover {
-                color: var(--gold-accent);
-            }
-
-    .post-list-excerpt {
-        color: #555;
-        font-size: 0.95rem;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        margin-bottom: 15px;
-    }
-
-    .read-more-link {
-        color: var(--navy-dark);
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-    }
-
-        .read-more-link:hover {
-            color: var(--gold-accent);
-        }
-
-    /* RESPONSIVE CHO MOBILE */
-    @@media (max-width: 768px) {
-        .modern-post-list-item
-
-    {
-        grid-template-columns: 1fr; /* Quay về dạng dọc trên mobile */
-    }
-
-    .post-list-thumb {
-        height: 200px;
-    }
-
-    .post-list-body {
-        padding: 20px;
-    }
-
-    }
+    /* COPY TOÀN BỘ CSS GỐC CỦA BẠN VÀO ĐÂY */
     :root {
+        --navy-primary: #0a192f;
         --navy-dark: #0a192f;
-        --navy-blue: #112240;
         --gold-accent: #c5a059;
-        --text-gray: #8892b0;
-        --bg-light: #f8f9fa;
+        --gold-hover: #b08d4a;
+        --text-muted: #64748b;
+        --glass-white: rgba(255, 255, 255, 0.95);
     }
 
-    body {
-        background-color: var(--bg-body);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        color: #333;
-    }
-
-    /* 1. HERO & VIDEO */
     .hero-wrapper {
         position: relative;
         height: 80vh;
@@ -690,6 +230,7 @@
         font-weight: 800;
         letter-spacing: -1px;
         margin-bottom: 1.5rem;
+        color: white;
     }
 
     .hero-divider {
@@ -717,139 +258,184 @@
             color: #fff;
         }
 
-    /* 2. SECTION HEADERS */
-    .section-title {
-        font-weight: 800;
-        color: var(--navy-dark);
-        text-transform: uppercase;
-        letter-spacing: 1px;
+    /* Post List Luxury Style */
+    .post-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
     }
 
-    .section-underline {
-        width: 50px;
-        height: 4px;
-        background: var(--gold-accent);
-        margin-top: 10px;
-    }
-
-    /* 3. MODERN POST CARDS */
-    .post-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 25px;
-    }
-
-    .modern-post-card {
-        background: #fff;
-        border-radius: 15px;
+    .modern-post-list-item {
+        display: flex;
+        background: var(--glass-white);
+        border-radius: 16px;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(0, 0, 0, 0.03);
         transition: 0.4s;
+        position: relative;
     }
 
-        .modern-post-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        .modern-post-list-item:hover {
+            transform: translateY(-5px) translateX(5px);
+            box-shadow: -10px 10px 30px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--gold-accent);
         }
 
-    .post-thumb {
+    .post-list-thumb {
+        width: 280px;
+        min-width: 280px;
+        height: 190px;
         position: relative;
-        height: 200px;
+        overflow: hidden;
     }
 
-        .post-thumb img {
+        .post-list-thumb img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: 0.6s;
         }
 
-    .post-category {
+    .modern-post-list-item:hover .post-list-thumb img {
+        transform: scale(1.1);
+    }
+
+    .post-category-tag {
         position: absolute;
         top: 15px;
         left: 15px;
-        background: rgba(197, 160, 89, 0.9);
+        background: var(--gold-accent);
         color: white;
         padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: bold;
+        font-size: 0.7rem;
+        font-weight: 700;
+        border-radius: 50px;
+        z-index: 2;
     }
 
-    .post-content {
-        padding: 20px;
+    .post-list-body {
+        padding: 24px 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
-    .post-meta {
-        font-size: 0.8rem;
-        color: var(--text-gray);
-        margin-bottom: 8px;
-    }
-
-    .post-title a {
-        color: var(--navy-dark);
+    .post-list-title a {
+        color: var(--navy-primary);
         text-decoration: none;
         font-weight: 700;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        font-size: 1.25rem;
     }
 
-        .post-title a:hover {
-            color: var(--gold-accent);
-        }
-
-    .post-excerpt {
-        font-size: 0.9rem;
-        color: #666;
-        margin-top: 10px;
+    .read-more-link {
+        color: var(--gold-accent);
+        text-decoration: none;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        transition: 0.3s;
     }
 
-    /* 4. MODERN CATEGORY CARDS */
-    .modern-cat-card {
+    /* Category Card Luxury */
+    .category-luxury-card {
         position: relative;
-        border-radius: 15px;
+        display: block;
+        height: 320px;
+        border-radius: 20px;
         overflow: hidden;
-        background: var(--navy-dark);
-        color: #fff;
-        height: 250px;
-    }
-
-    .cat-image-wrapper {
-        width: 100%;
-        height: 100%;
-        opacity: 0.4;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
         transition: 0.5s;
     }
 
-        .cat-image-wrapper img {
+    .category-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+    }
+
+        .category-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: 0.8s;
         }
 
-    .cat-body {
+    .category-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom, rgba(10, 25, 47, 0.2) 0%, rgba(10, 25, 47, 0.8) 100%);
+        z-index: 2;
+    }
+
+    .category-content {
         position: absolute;
         bottom: 0;
         left: 0;
         width: 100%;
-        padding: 25px;
-        background: linear-gradient(to top, rgba(10,25,47,1), transparent);
+        padding: 30px;
+        z-index: 3;
+        color: white;
+        transform: translateY(60px);
+        transition: 0.5s;
     }
 
-    .btn-read-more {
-        color: var(--gold-accent);
-        text-decoration: none;
-        font-weight: bold;
-        font-size: 0.85rem;
+    .category-luxury-card:hover .category-content {
+        transform: translateY(0);
     }
 
-    .modern-cat-card:hover .cat-image-wrapper {
-        opacity: 0.7;
-        transform: scale(1.1);
+    .category-luxury-card:hover .category-details {
+        opacity: 1;
     }
 
-    /* UTILITIES */
+    .category-details {
+        opacity: 0;
+        transition: 0.4s;
+    }
+
+    /* Faculty Card */
+    .faculty-card {
+        background: #fff;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(10, 25, 47, 0.05);
+        transition: 0.4s;
+        height: 100%;
+    }
+
+    .faculty-image {
+        position: relative;
+        height: 250px;
+        background: #f8f9fa;
+    }
+
+        .faculty-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 30px;
+        }
+
+    .faculty-name {
+        color: #0a192f;
+        font-weight: 800;
+        font-size: 1rem;
+    }
+
+    .faculty-rank {
+        color: #c5a059;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    /* Utilities */
     .mt-n5 {
         margin-top: -3rem !important;
     }
@@ -862,13 +448,39 @@
         z-index: 3;
     }
 
+    .section-title {
+        font-weight: 800;
+        color: var(--navy-dark);
+        text-transform: uppercase;
+    }
+
+    .section-underline {
+        width: 50px;
+        height: 4px;
+        background: var(--gold-accent);
+        margin-top: 10px;
+    }
+
     @@media (max-width: 768px) {
-        .hero-wrapper {
-            height: 60vh;
+        .modern-post-list-item {
+            flex-direction: column;
+        }
+
+        .post-list-thumb {
+            width: 100%;
+            height: 200px;
         }
 
         .mt-n5 {
             margin-top: -1rem !important;
+        }
+
+        .category-content {
+            transform: translateY(0);
+        }
+
+        .category-details {
+            opacity: 1;
         }
     }
 </style>
@@ -876,21 +488,33 @@
 @code {
     private List<PostDto>? recentPosts;
     private List<CategoryDto>? categories;
+    private bool isLoading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        try
+        if (firstRender)
         {
-            categories = await CategoryService.GetAllAsync();
-            var allPosts = await PostService.GetAllAsync();
-            if (allPosts != null)
+            try
             {
-                recentPosts = allPosts.Where(p => p.Status == "Published").OrderByDescending(p => p.CreatedDate).Take(6).ToList();
+                // TỐI ƯU TỐC ĐỘ: Gọi đúng hàm phân trang để lấy số lượng ít bài viết
+                var categoriesTask = CategoryService.GetAllAsync();
+                var postsTask = PostService.GetPagedPostsAsync(page: 1, pageSize: 3);
+
+                await Task.WhenAll(categoriesTask, postsTask);
+
+                categories = await categoriesTask;
+                var result = await postsTask;
+                recentPosts = result.Posts;
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            finally
+            {
+                isLoading = false;
+                StateHasChanged();
+            }
         }
     }
 }

@@ -13,323 +13,214 @@
 
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h2 class="fw-bold m-0 border-start border-danger border-4 ps-2" style="color: #1a237e;">QUẢN LÝ BÀI GIẢNG / BÀI VIẾT</h2>
-        <a href="/admin/posts/create" class="btn btn-danger fw-bold shadow-sm">
-            <i class="oi oi-plus me-1"></i> VIẾT BÀI MỚI
-        </a>
+        <h2 class="fw-bold m-0 border-start border-danger border-4 ps-2" style="color: #1a237e;">QUẢN LÝ BÀI VIẾT</h2>
+        <div class="d-flex gap-2">
+            @* Nút tải lại dữ liệu nhanh *@
+            <button class="btn btn-outline-primary fw-bold" @onclick="RefreshData" disabled="@isLoading">
+                <i class="oi oi-reload @(isLoading ? "ani-spin" : "")"></i>
+            </button>
+            <a href="/admin/posts/create" class="btn btn-danger fw-bold shadow-sm">
+                <i class="oi oi-plus me-1"></i> VIẾT BÀI MỚI
+            </a>
+        </div>
     </div>
 
-    @* HỆ THỐNG TABS ĐIỀU HƯỚNG *@
-    <ul class="nav nav-tabs mb-4 fw-bold fs-5">
+    @* TABS *@
+    <ul class="nav nav-tabs mb-4 fw-bold">
         <li class="nav-item">
-            <a class="nav-link @(activeTab == "Published" ? "active text-danger border-bottom-0" : "text-secondary")"
+            <a class="nav-link @(activeTab == "Published" ? "active text-danger" : "text-secondary")"
                @onclick='() => SwitchTab("Published")' style="cursor:pointer">
-                <i class="oi oi-task me-1"></i> BÀI VIẾT ĐÃ ĐĂNG
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link @(activeTab == "Pending" ? "active text-danger border-bottom-0" : "text-secondary")"
-               @onclick='() => SwitchTab("Pending")' style="cursor:pointer">
-                <i class="oi oi-cloud-download me-1"></i> TIN CHỜ DUYỆT (BOT CÀO)
-                @if (pendingPosts != null && pendingPosts.Any())
-                {
-                    <span class="badge bg-danger ms-2 rounded-pill shadow-sm">@pendingPosts.Count</span>
-                }
+                BÀI ĐÃ ĐĂNG (@(posts?.Count ?? 0))
             </a>
         </li>
     </ul>
 
-    <div class="card shadow-sm border-0 rounded-3">
-        <div class="card-body p-0 table-responsive">
-
-            @* TAB 1: DANH SÁCH BÀI ĐÃ ĐĂNG (Code cũ của cục cứt) *@
-            @if (activeTab == "Published")
-            {
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th style="width: 100px;">Ảnh bìa</th>
-                            <th>Tiêu đề bài viết</th>
-                            <th>Chuyên mục</th>
-                            <th>Ngày đăng</th>
-                            <th class="text-end" style="width: 200px;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (posts == null)
-                        {
-                            <tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-danger"></div></td></tr>
-                        }
-                        else if (!posts.Any())
-                        {
-                            <tr><td colspan="5" class="text-center py-5 text-muted">Chưa có bài viết nào trong hệ thống.</td></tr>
-                        }
-                        else
-                        {
-                            foreach (var post in posts.Where(p => p.Status == "Published"))
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
-                                             class="rounded" style="width: 80px; height: 50px; object-fit: cover;" onerror="this.src='Images/Logo_hoc_vien_ANND.png'" />
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold text-dark text-truncate" style="max-width: 350px;">@post.Title</div>
-                                        <div class="small text-muted text-truncate" style="max-width: 350px;">@post.Summary</div>
-                                    </td>
-                                    <td><span class="badge bg-secondary">@post.CategoryName</span></td>
-                                    <td>@(post.CreatedDate?.ToString("dd/MM/yyyy HH:mm"))</td>
-                                    <td class="text-end">
-                                        <button class="btn btn-sm btn-outline-primary me-2" @onclick="() => EditPost(post.PostId)"><i class="oi oi-pencil"></i> Sửa</button>
-                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePost(post.PostId, post.Title)"><i class="oi oi-trash"></i> Xóa</button>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            }
-
-            @* TAB 2: DANH SÁCH TIN CHỜ DUYỆT (MỚI) *@
-            @if (activeTab == "Pending")
-            {
-                <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-                    <span class="text-muted small"><i class="oi oi-info"></i> Tin tức cào tự động. Cần được phân loại chuyên mục trước khi xuất bản.</span>
-                    <div class="btn-group shadow-sm flex-wrap">
-                        <button class="btn btn-warning fw-bold text-dark" @onclick='() => RunBot("VnExpress")' disabled="@isRunningBot">
-                            <i class="oi oi-cog me-1"></i> VNEXPRESS
-                        </button>
-                        <button class="btn btn-primary fw-bold" @onclick='() => RunBot("CAND")' disabled="@isRunningBot">
-                            <i class="oi oi-shield me-1"></i> BÁO C.A.N.D
-                        </button>
-                        <button class="btn btn-danger fw-bold" @onclick='() => RunBot("TuoiTre")' disabled="@isRunningBot">
-                            <i class="oi oi-fire me-1"></i> TUỔI TRẺ
-                        </button>
-                        <button class="btn btn-info fw-bold text-white" @onclick='() => RunBot("ThanhNien")' disabled="@isRunningBot">
-                            <i class="oi oi-bolt me-1"></i> THANH NIÊN
-                        </button>
-                        @* NÚT QUÉT VIDEO ĐA KÊNH *@
-                        <button class="btn btn-dark fw-bold text-white" @onclick='() => RunBot("YouTube")' disabled="@isRunningBot">
-                            <i class="oi oi-video me-1 text-danger"></i> QUÉT 5 KÊNH YOUTUBE
-                        </button>
-                    </div>
-                </div>
-
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-white">
-                        <tr>
-                            <th style="width: 100px;">Ảnh bìa</th>
-                            <th>Tiêu đề bài viết</th>
-                            <th>Thời gian cào</th>
-                            <th class="text-end" style="width: 250px;">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (pendingPosts == null)
-                        {
-                            <tr><td colspan="4" class="text-center py-5"><div class="spinner-border text-danger"></div></td></tr>
-                        }
-                        else if (!pendingPosts.Any())
-                        {
-                            <tr><td colspan="4" class="text-center py-5 text-muted">Kho chứa đang trống. Hãy bấm nút "Gọi Bot" ở trên!</td></tr>
-                        }
-                        else
-                        {
-                            foreach (var post in pendingPosts)
-                            {
-                                <tr>
-                                    <td>
-                                        <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
-                                             class="rounded" style="width: 80px; height: 50px; object-fit: cover;" onerror="this.src='Images/Logo_hoc_vien_ANND.png'" />
-                                    </td>
-                                    <td>
-                                        <div class="fw-bold text-dark">
-                                            <a href="@post.OriginalUrl" target="_blank" class="text-decoration-none">@post.Title <i class="oi oi-external-link ms-1 small"></i></a>
-                                        </div>
-                                        <div class="small text-muted text-truncate" style="max-width: 450px;">@post.Summary</div>
-                                    </td>
-                                    <td>@(post.CreatedDate?.ToString("dd/MM/yyyy HH:mm"))</td>
-                                    <td class="text-end">
-                                        <button class="btn btn-sm btn-success fw-bold me-2 shadow-sm px-3" @onclick="() => OpenApproveModal(post)"><i class="oi oi-check me-1"></i> Duyệt bài</button>
-                                        <button class="btn btn-sm btn-danger fw-bold shadow-sm px-3" @onclick="() => DeletePost(post.PostId, post.Title)"><i class="oi oi-trash"></i> Xóa</button>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                    </tbody>
-                </table>
-            }
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
+        <div class="card-body p-0 table-responsive" style="min-height: 400px;">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light text-uppercase" style="font-size: 0.85rem;">
+                    <tr>
+                        <th class="ps-3" style="width: 100px;">Ảnh</th>
+                        <th>Nội dung bài viết</th>
+                        <th>Chuyên mục</th>
+                        <th>Ngày tạo</th>
+                        <th class="text-end pe-3">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (isLoading)
+                    {
+                        @* Giữ nguyên skeleton *@
+                    }
+                    else
+                    {
+                        @* Dùng Virtualize thay cho foreach *@
+                        <Virtualize Items="posts" Context="post" OverscanCount="5">
+                            <tr class="animate-fade-in">
+                                <td class="ps-3">
+                                    <img src="@post.ImageUrl" class="rounded shadow-sm"
+                                         style="width: 70px; height: 45px; object-fit: cover;" />
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-navy text-truncate" style="max-width: 400px;">@post.Title</div>
+                                    <div class="small text-muted text-truncate" style="max-width: 400px;">@post.Summary</div>
+                                </td>
+                                <td><span class="badge bg-gold-soft text-gold">@post.CategoryName</span></td>
+                                <td class="small text-muted">@post.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end pe-3">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-white border" @onclick="() => EditPost(post.PostId)">
+                                            <i class="oi oi-pencil text-primary"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-white border" @onclick="() => DeletePost(post.PostId, post.Title)">
+                                            <i class="oi oi-trash text-danger"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </Virtualize>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
-@* MODAL DUYỆT BÀI (CHỌN CHUYÊN MỤC) *@
-@if (isApproving && approvingPost != null)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6); z-index: 1050;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-success text-white rounded-top">
-                    <h5 class="modal-title fw-bold"><i class="oi oi-check me-2"></i> Xác nhận Xuất bản</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseApproveModal"></button>
-                </div>
-                <div class="modal-body bg-light">
-                    <div class="mb-3">
-                        <label class="form-label text-muted small">Đang duyệt bài:</label>
-                        <div class="fw-bold text-primary">@approvingPost.Title</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Chọn chuyên mục để đăng <span class="text-danger">*</span></label>
-                        <select class="form-select border-success form-select-lg" @bind="selectedCategoryIdToApprove">
-                            <option value="0">-- Vui lòng chọn chuyên mục --</option>
-                            @if (categories != null)
-                            {
-                                @foreach (var cat in categories)
-                                {
-                                    <option value="@cat.CategoryId">@cat.CategoryName</option>
-                                }
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary px-4 fw-bold" @onclick="CloseApproveModal">Hủy</button>
-                    <button type="button" class="btn btn-success px-4 fw-bold shadow" @onclick="ConfirmApprove" disabled="@(selectedCategoryIdToApprove == 0 || isSaving)">
-                        @if (isSaving)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        XUẤT BẢN LÊN WEB
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+<style>
+    .text-navy {
+        color: #1a237e;
+    }
+
+    .bg-gold-soft {
+        background-color: rgba(197, 160, 89, 0.1);
+        color: #b08d4a;
+        border: 1px solid rgba(197, 160, 89, 0.2);
+    }
+
+    .btn-white {
+        background: #fff;
+    }
+
+        .btn-white:hover {
+            background: #f8f9fa;
+        }
+
+    /* Hiệu ứng xoay khi loading */
+    .ani-spin {
+        animation: spin 1s linear infinite;
+    }
+    @@keyframes spin {
+        from
+
+    {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+    }
+
+    /* Skeleton Loading Table */
+    .skeleton-row {
+        height: 70px;
+    }
+
+    .skeleton-line {
+        height: 20px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading-shimmer 1.5s infinite;
+        border-radius: 4px;
+        margin: 10px;
+    }
+    @@keyframes loading-shimmer {
+        to
+
+    {
+        background-position: -200% 0;
+    }
+
+    }
+
+    .animate-fade-in {
+        animation: fadeIn 0.4s ease-in;
+    }
+    @@keyframes fadeIn {
+        from
+
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+    }</style>
 
 @code {
-    private string activeTab = "Published"; // Mặc định mở tab Bài đã đăng
-
-    private List<PostDto>? posts;
-    private List<PostDto>? pendingPosts;
-    private List<CategoryDto>? categories;
-
-    private bool isRunningBot = false;
-
-    // Biến cho Modal duyệt bài
-    private bool isApproving = false;
-    private bool isSaving = false;
-    private PostDto? approvingPost;
-    private int selectedCategoryIdToApprove = 0;
+    private string activeTab = "Published";
+    private List<PostListItemDto> posts = new(); // Khởi tạo list rỗng để tránh null check liên tục
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
-        categories = await CategoryService.GetAllAsync();
+        // Gọi dữ liệu ngay tại đây
         await LoadData();
     }
 
     private async Task LoadData()
     {
-        // Tải cả bài đăng rồi và tin chờ duyệt
-        posts = await PostService.GetAllAsync();
-        if (posts != null) posts = posts.OrderByDescending(p => p.CreatedDate).ToList();
-
-        pendingPosts = await ScraperService.GetPendingPostsAsync();
-    }
-
-    private void SwitchTab(string tabName)
-    {
-        activeTab = tabName;
-    }
-
-    // GỌI BOT CÀO TIN ĐA NGUỒN
-    private async Task RunBot(string source)
-    {
-        isRunningBot = true;
-        string message = "";
-
-        switch (source)
-        {
-            case "VnExpress": message = await ScraperService.RunVnExpressScraperAsync(); break;
-            case "CAND": message = await ScraperService.RunCandScraperAsync(); break;
-            case "TuoiTre": message = await ScraperService.RunTuoiTreScraperAsync(); break;
-            case "ThanhNien": message = await ScraperService.RunThanhNienScraperAsync(); break;
-            case "YouTube": message = await ScraperService.RunYouTubeScraperAsync(); break; // <--- CHÍNH LÀ DÒNG NÀY
-        }
-
-        await JS.InvokeVoidAsync("alert", message);
-        await LoadData();
-        isRunningBot = false;
-    }
-
-    // CÁC HÀM XỬ LÝ DUYỆT BÀI
-    private void OpenApproveModal(PostDto post)
-    {
-        approvingPost = post;
-        selectedCategoryIdToApprove = 0; // Reset dropdown
-        isApproving = true;
-    }
-
-    private void CloseApproveModal()
-    {
-        isApproving = false;
-        approvingPost = null;
-    }
-
-    private async Task ConfirmApprove()
-    {
-        if (approvingPost == null || selectedCategoryIdToApprove == 0) return;
-        isSaving = true;
+        isLoading = true;
+        StateHasChanged();
 
         try
         {
-            // 1. Kéo full dữ liệu bài viết từ Database về (vì list pending chỉ có tiêu đề và tóm tắt)
-            var fullPost = await PostService.GetByIdAsync(approvingPost.PostId);
-            if (fullPost != null)
-            {
-                // 2. Gắn chuyên mục và đổi trạng thái thành Published
-                fullPost.CategoryId = selectedCategoryIdToApprove;
-                fullPost.Status = "Published";
-                fullPost.PublishedDate = DateTime.Now;
+            // Gọi hàm mới siêu nhẹ
+            var allPosts = await PostService.GetAdminPostsAsync();
 
-                // 3. Dùng hàm Update cũ của cục cứt để lưu đè lên Database
-                var success = await PostService.UpdateAsync(fullPost.PostId, fullPost);
-                if (success)
-                {
-                    await JS.InvokeVoidAsync("alert", " Đã duyệt và xuất bản bài viết thành công.");
-                    await LoadData(); // Cập nhật lại cả 2 bảng
-                    CloseApproveModal();
-                }
-                else
-                {
-                    await JS.InvokeVoidAsync("alert", "Lỗi khi lưu bài viết vào máy chủ.");
-                }
+            if (allPosts != null)
+            {
+                posts = allPosts
+                    .Where(p => p.Status == activeTab)
+                    .OrderByDescending(p => p.CreatedDate)
+                    .ToList();
             }
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", "Lỗi: " + ex.Message);
+            await JS.InvokeVoidAsync("console.log", ex.Message);
         }
         finally
         {
-            isSaving = false;
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
-    // GIỮ NGUYÊN CÁC HÀM CŨ CỦA CỤC CỨT
-    private void EditPost(int id)
+    // TỐI ƯU 3: Sử dụng phương thức không đồng bộ thực sự cho Tab
+    private async Task SwitchTab(string tabName)
     {
-        Nav.NavigateTo($"/admin/posts/edit/{id}");
+        if (activeTab == tabName) return;
+        activeTab = tabName;
+        posts.Clear(); // Xóa list cũ để hiện skeleton ngay
+        await LoadData();
     }
+    private async Task RefreshData() => await LoadData();
+
+    
+
+    private void EditPost(int id) => Nav.NavigateTo($"/admin/posts/edit/{id}");
 
     private async Task DeletePost(int id, string title)
     {
-        bool isConfirmed = await JS.InvokeAsync<bool>("confirm", $"Bạn có chắc chắn muốn xóa bài viết:\n'{title}'\nHành động này không thể hoàn tác!");
-        if (isConfirmed)
+        bool confirm = await JS.InvokeAsync<bool>("confirm", $"Xóa bài viết: {title}?");
+        if (confirm)
         {
             var success = await PostService.DeleteAsync(id);
             if (success) await LoadData();
-            else await JS.InvokeVoidAsync("alert", "Lỗi: Không thể xóa bài viết này từ máy chủ.");
         }
     }
 }

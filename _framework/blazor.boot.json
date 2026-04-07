@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "KhoaNVCB_Client",
   "resources": {
-    "hash": "sha256-rp9DHPmiPIio35yqa1D7Dq/zpf1NCjhM1msyNtgty0c=",
+    "hash": "sha256-i9ULJ91ryuUz8HAyhgFQxjlRtfce/YwizmJECqQACOg=",
     "jsModuleNative": {
       "dotnet.native.js": "sha256-A16ka545FHaB+QXjyJ4exXh7XpBAAIFnX8YkC4xAng8="
     },
@@ -92,7 +92,7 @@
       "System.wasm": "sha256-25KTxVbx+rD8S9iyUye7jmbj1e4TZ5Ca+elup4oegJA=",
       "netstandard.wasm": "sha256-udrvQFa8xpI5TaGQ1vffwDSUFMkTglRXSq5Rv+hnz2w=",
       "System.Private.CoreLib.wasm": "sha256-UYBY9u64UV9VdA9JP0UWMbGpC4P3C7C4UuvgDteALGU=",
-      "KhoaNVCB_Client.wasm": "sha256-Py4Z9BJ89gQHYYZUsJ8tb9mSX/7VMUvP22S6FUolkqo="
+      "KhoaNVCB_Client.wasm": "sha256-jcQdDJlbp3I+Awo3s01iPLVheptxNMVt/k5NC03Nhhw="
     }
   },
   "cacheBootResources": true,

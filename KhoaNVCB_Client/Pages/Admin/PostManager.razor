@@ -16,8 +16,11 @@
         <h2 class="fw-bold m-0 border-start border-danger border-4 ps-2" style="color: #1a237e;">QUẢN LÝ BÀI VIẾT</h2>
         <div class="d-flex gap-2">
             @* Nút tải lại dữ liệu nhanh *@
-            <button class="btn btn-outline-primary fw-bold" @onclick="RefreshData" disabled="@isLoading">
-                <i class="oi oi-reload @(isLoading ? "ani-spin" : "")"></i>
+            <button class="btn btn-outline-primary fw-bold shadow-sm d-inline-flex align-items-center"
+                    @onclick="RefreshData" disabled="@isLoading">
+                <i class="bi bi-arrow-clockwise me-1 @(isLoading ? "ani-spin" : "")"
+                   style="font-size: 1.1rem; display: inline-block;"></i>
+                <span>LÀM MỚI</span>
             </button>
             <a href="/admin/posts/create" class="btn btn-danger fw-bold shadow-sm">
                 <i class="oi oi-plus me-1"></i> VIẾT BÀI MỚI
@@ -58,8 +61,10 @@
                         <Virtualize Items="posts" Context="post" OverscanCount="5">
                             <tr class="animate-fade-in">
                                 <td class="ps-3">
-                                    <img src="@post.ImageUrl" class="rounded shadow-sm"
-                                         style="width: 70px; height: 45px; object-fit: cover;" />
+                                    <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "/Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
+                                         class="rounded shadow-sm"
+                                         style="width: 70px; height: 45px; object-fit: cover;"
+                                         onerror="this.src='/images/no-image-available.png';" />
                                 </td>
                                 <td>
                                     <div class="fw-bold text-navy text-truncate" style="max-width: 400px;">@post.Title</div>
@@ -69,11 +74,11 @@
                                 <td class="small text-muted">@post.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td class="text-end pe-3">
                                     <div class="btn-group">
-                                        <button class="btn btn-sm btn-white border" @onclick="() => EditPost(post.PostId)">
-                                            <i class="oi oi-pencil text-primary"></i>
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => EditPost(post.PostId)">
+                                            <i class="bi bi-pencil-square"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-white border" @onclick="() => DeletePost(post.PostId, post.Title)">
-                                            <i class="oi oi-trash text-danger"></i>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePost(post.PostId, post.Title)">
+                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </div>
                                 </td>
@@ -87,28 +92,163 @@
 </div>
 
 <style>
-    .text-navy {
-        color: #1a237e;
+    /* Làm rõ khung ảnh */
+    .ps-3 img {
+        background-color: #f0f0f0;
+        display: block;
+        min-width: 70px;
+        min-height: 45px;
     }
 
+    /* Định dạng lại nhóm nút thao tác */
+    .btn-group .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 35px;
+        height: 35px;
+        border: 1px solid #dee2e6 !important; /* Ép viền hiện lên */
+        margin-left: 5px;
+    }
+
+    /* Hiệu ứng khi hover vào hàng */
+    tr:hover {
+        background-color: rgba(26, 35, 126, 0.05) !important;
+    }
+
+    /* Nếu dùng Open Iconic, đảm bảo font-family đúng */
+    .oi {
+        font-family: 'Icons'; /* Tên font tùy thuộc thư viện bạn dùng */
+        font-style: normal;
+    }
+    /* Tổng thể container */
+    .container {
+        max-width: 1200px;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    /* Màu sắc tùy chỉnh */
+    :root {
+        --navy-blue: #1a237e;
+        --gold-bg: #fff9c4;
+        --gold-text: #fbc02d;
+        --transition-speed: 0.3s;
+    }
+
+    /* Hiệu ứng chuyển động cho hàng trong bảng */
+    .animate-fade-in {
+        animation: slideUp 0.4s ease forwards;
+    }
+
+    @@eyframes slideUp {
+        from
+
+    {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    }
+
+    /* Làm đẹp Table */
+    .table thead {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #edf2f7;
+    }
+
+        .table thead th {
+            font-weight: 700;
+            color: #4a5568;
+            letter-spacing: 0.05em;
+            padding: 1rem 0.75rem;
+        }
+
+    .table tbody tr {
+        transition: all var(--transition-speed);
+        border-bottom: 1px solid #f1f1f1;
+    }
+
+        .table tbody tr:hover {
+            background-color: #fcfcfd !important;
+            transform: scale(1.002);
+            box-shadow: inset 4px 0 0 var(--navy-blue);
+        }
+
+    /* Badge chuyên mục */
     .bg-gold-soft {
-        background-color: rgba(197, 160, 89, 0.1);
-        color: #b08d4a;
-        border: 1px solid rgba(197, 160, 89, 0.2);
+        background-color: var(--gold-bg);
+        color: #856404;
+        padding: 0.5em 0.8em;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.75rem;
     }
 
+    /* Tabs hiện đại */
+    .nav-tabs {
+        border-bottom: 2px solid #edf2f7;
+    }
+
+        .nav-tabs .nav-link {
+            border: none;
+            padding: 1rem 1.5rem;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+            .nav-tabs .nav-link.active {
+                background: transparent;
+                border: none;
+                color: var(--navy-blue) !important;
+            }
+
+                .nav-tabs .nav-link.active::after {
+                    content: '';
+                    position: absolute;
+                    bottom: -2px;
+                    left: 0;
+                    width: 100%;
+                    height: 3px;
+                    background: #dc3545; /* Màu đỏ như border-danger của bạn */
+                    border-radius: 3px 3px 0 0;
+                }
+
+    /* Nút bấm (Buttons) */
     .btn-white {
         background: #fff;
+        transition: all 0.2s;
     }
 
         .btn-white:hover {
             background: #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-    /* Hiệu ứng xoay khi loading */
+    .btn-group .btn {
+        padding: 0.4rem 0.7rem;
+        margin: 0 2px;
+    }
+
+    /* Ảnh xem trước */
+    img.rounded {
+        border: 2px solid #fff;
+        transition: transform 0.3s ease;
+    }
+
+    tr:hover img.rounded {
+        transform: scale(1.1);
+    }
+
+    /* Icon xoay khi loading */
     .ani-spin {
         animation: spin 1s linear infinite;
     }
+
     @@keyframes spin {
         from
 
@@ -122,43 +262,17 @@
 
     }
 
-    /* Skeleton Loading Table */
-    .skeleton-row {
-        height: 70px;
+    /* Custom Scrollbar cho table responsive */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
     }
 
-    .skeleton-line {
-        height: 20px;
-        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-        background-size: 200% 100%;
-        animation: loading-shimmer 1.5s infinite;
-        border-radius: 4px;
-        margin: 10px;
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 10px;
     }
-    @@keyframes loading-shimmer {
-        to
+</style>
 
-    {
-        background-position: -200% 0;
-    }
-
-    }
-
-    .animate-fade-in {
-        animation: fadeIn 0.4s ease-in;
-    }
-    @@keyframes fadeIn {
-        from
-
-    {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
-    }</style>
 
 @code {
     private string activeTab = "Published";

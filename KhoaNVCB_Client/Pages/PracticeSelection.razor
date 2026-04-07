@@ -4,86 +4,176 @@
 @inject HttpClient Http
 @inject NavigationManager NavManager
 
+<style>
+    :root {
+        --brand-primary: #0f172a;
+        --brand-accent: #10b981;
+        --brand-bg: #f8fafc;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+    }
+
+    .practice-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 30px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+
+    .custom-header {
+        background: var(--brand-primary);
+        padding: 2.5rem 2rem;
+        position: relative;
+    }
+
+        /* Hiệu ứng hạt chìm cho Header */
+        .custom-header::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 20px 20px;
+        }
+
+    /* Style chung cho Radio Buttons (Số câu & Thời gian) */
+    .option-selector .btn-check + .btn {
+        background: #ffffff;
+        border: 1.5px solid #edf2f7;
+        color: var(--text-main);
+        border-radius: 16px;
+        padding: 1rem 0.5rem;
+        transition: all 0.25s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .option-selector .btn-check:checked + .btn {
+        background: #ecfdf5;
+        border-color: var(--brand-accent);
+        color: var(--brand-accent);
+        font-weight: 700;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 15px -5px rgba(16, 185, 129, 0.2);
+    }
+
+    .custom-select {
+        background-color: #f8fafc !important;
+        border: 1.5px solid #edf2f7 !important;
+        border-radius: 14px !important;
+        padding: 0.75rem 1rem !important;
+    }
+
+    .btn-start {
+        background: var(--brand-accent);
+        color: white;
+        font-weight: 700;
+        border-radius: 18px;
+        padding: 1.2rem;
+        border: none;
+        box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.4);
+        transition: all 0.3s ease;
+    }
+
+        .btn-start:hover {
+            background: #059669;
+            transform: scale(1.02);
+        }
+
+    .section-title {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        display: block;
+    }
+</style>
+
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 20px;">
-                <div class="card-header border-0 py-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                    <div class="text-center text-white">
-                        <i class="bi bi-journal-check mb-2" style="font-size: 2.5rem;"></i>
-                        <h3 class="fw-extrabold mb-0" style="letter-spacing: 1px;">CẤU HÌNH ÔN TẬP</h3>
-                        <p class="small opacity-75 mb-0">Tùy chỉnh lộ trình học tập của riêng bạn</p>
+        <div class="col-md-8 col-lg-5">
+            <div class="card practice-card">
+                <div class="custom-header text-center text-white">
+                    <div class="mb-2">
+                        <i class="bi bi-ui-checks text-success fs-1"></i>
                     </div>
+                    <h3 class="fw-bold mb-1">Cài đặt ôn tập</h3>
+                    <p class="small opacity-50 mb-0">Cùng nhau ôn luyện nào!!!</p>
                 </div>
 
-                <div class="card-body p-4 p-md-5 bg-light">
+                <div class="card-body p-4 p-md-5">
                     @if (categories == null)
                     {
                         <div class="text-center py-5">
-                            <div class="spinner-grow text-primary" role="status"></div>
-                            <p class="text-muted mt-3 fw-medium">Đang chuẩn bị dữ liệu...</p>
+                            <div class="spinner-border text-success" role="status"></div>
                         </div>
                     }
                     else
                     {
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary mb-3">
-                                <i class="bi bi-tag-fill me-2"></i>1. Chọn chủ đề ôn tập
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white border-end-0" style="border-radius: 12px 0 0 12px;">
-                                    <i class="bi bi-search text-muted"></i>
-                                </span>
-                                <select class="form-select form-select-lg border-start-0 shadow-none"
-                                        style="border-radius: 0 12px 12px 0; font-size: 1rem;"
-                                        @bind="selectedCategoryId">
-                                    <option value="0">Tất cả chủ đề</option>
-                                    @foreach (var cat in categories)
-                                    {
-                                        <option value="@cat.CategoryId">@cat.CategoryName</option>
-                                    }
-                                </select>
-                            </div>
+                            <label class="section-title">1. Chủ đề ôn tập</label>
+                            <select class="form-select form-select-lg custom-select shadow-none" @bind="selectedCategoryId">
+                                <option value="0">Tất cả danh mục kiến thức</option>
+                                @foreach (var cat in categories)
+                                {
+                                    <option value="@cat.CategoryId">@cat.CategoryName</option>
+                                }
+                            </select>
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label fw-bold text-secondary mb-3">
-                                <i class="bi bi-list-ol me-2"></i>2. Số lượng câu hỏi
-                            </label>
-                            <div class="row g-2">
+                            <label class="section-title">2. Số lượng câu hỏi</label>
+                            <div class="row g-2 option-selector">
                                 @foreach (var num in new[] { 10, 20, 30, 50 })
                                 {
                                     <div class="col-3">
-                                        <input type="radio" class="btn-check" name="countOptions" id="btn-@num"
+                                        <input type="radio" class="btn-check" name="countOptions" id="count-@num"
                                                value="@num" checked="@(selectedCount == num)"
                                                @onclick="() => selectedCount = num">
-                                        <label class="btn btn-outline-primary w-100 py-3 rounded-4 transition-all" for="btn-@num">
-                                            <span class="d-block fs-4">@num</span>
-                                            <span class="small uppercase" style="font-size: 0.7rem;">CÂU</span>
+                                        <label class="btn w-100" for="count-@num">
+                                            <span class="fs-5">@num</span>
+                                            <span style="font-size: 0.6rem; opacity: 0.7;">CÂU</span>
                                         </label>
                                     </div>
                                 }
                             </div>
                         </div>
 
-                        <div class="p-3 rounded-4 bg-white border mb-4 shadow-sm">
-                            <div class="d-flex align-items-center">
-                                <div class="icon-box me-3 bg-info-subtle text-info rounded-circle px-2 py-1">
-                                    <i class="bi bi-info-circle-fill"></i>
-                                </div>
-                                <div class="small text-muted">
-                                    Kết quả này dùng để luyện tập và sẽ <strong>không tính vào điểm số</strong> chính thức.
-                                </div>
+                        <div class="mb-4">
+                            <label class="section-title">3. Thời gian giới hạn</label>
+                            <div class="row g-2 option-selector">
+                                @foreach (var time in new[] { 5, 15, 30, 45 })
+                                {
+                                    <div class="col-3">
+                                        <input type="radio" class="btn-check" name="timeOptions" id="time-@time"
+                                               value="@time" checked="@(selectedMinutes == time)"
+                                               @onclick="() => selectedMinutes = time">
+                                        <label class="btn w-100" for="time-@time">
+                                            <span class="fs-5">@time</span>
+                                            <span style="font-size: 0.6rem; opacity: 0.7;">PHÚT</span>
+                                        </label>
+                                    </div>
+                                }
                             </div>
                         </div>
 
-                        <button class="btn btn-primary btn-lg w-100 py-3 rounded-4 border-0 shadow-primary"
-                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: transform 0.2s;"
-                                onmouseover="this.style.transform='scale(1.02)'"
-                                onmouseout="this.style.transform='scale(1)'"
-                                @onclick="StartPractice">
-                            <span class="fw-bold">BẮT ĐẦU NGAY</span>
-                            <i class="bi bi-arrow-right-short ms-2"></i>
+                        <div class="d-flex align-items-center p-3 rounded-3 bg-light mb-4">
+                            <i class="bi bi-clock-history text-primary me-3 fs-4"></i>
+                            <div style="font-size: 0.85rem;" class="text-secondary">
+                                Tổng cộng <strong>@selectedCount câu hỏi</strong> trong <strong>@selectedMinutes phút</strong>. Sẵn sàng?
+                            </div>
+                        </div>
+
+                        <button class="btn btn-start btn-lg w-100 shadow-lg text-uppercase" @onclick="StartPractice">
+                            Bắt đầu thử thách
+                            <i class="bi bi-rocket-takeoff-fill ms-2"></i>
                         </button>
                     }
                 </div>
@@ -92,34 +182,12 @@
     </div>
 </div>
 
-<style>
-    /* Custom CSS để bổ trợ */
-    .transition-all {
-        transition: all 0.3s ease;
-    }
-
-    .btn-check:checked + .btn-outline-primary {
-        background: #764ba2 !important;
-        border-color: #764ba2 !important;
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3);
-    }
-
-    .shadow-primary {
-        box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
-    }
-
-    .form-select:focus {
-        border-color: #667eea;
-        box-shadow: none;
-    }
-</style>
 
 @code {
     private List<CategoryDto>? categories; // Giả sử bạn đã có Model CategoryDto
     private int selectedCategoryId = 0;
     private int selectedCount = 20;
-
+    private int selectedMinutes = 15;
     protected override async Task OnInitializedAsync()
     {
         try
@@ -133,7 +201,7 @@
     private void StartPractice()
     {
         // Điều hướng sang trang Practice mà chúng ta đã làm ở bước trước
-        NavManager.NavigateTo($"/practice/{selectedCategoryId}/{selectedCount}");
+        NavManager.NavigateTo($"/practice/{selectedCategoryId}/{selectedCount}/{selectedMinutes}");
     }
 
     // Class phụ để hứng dữ liệu Category

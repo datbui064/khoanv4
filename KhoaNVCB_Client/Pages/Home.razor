@@ -37,7 +37,7 @@
             <small class="text-muted text-uppercase fw-semibold">Tài liệu nghiên cứu </small>
         </div>
         <div class="col-md-4 p-4 border-end">
-            <h3 class="fw-bold text-navy mb-0">50+</h3>
+            <h3 class="fw-bold text-navy mb-0">20+</h3>
             <small class="text-muted text-uppercase fw-semibold">Giảng viên chuyên gia</small>
         </div>
         <div class="col-md-4 p-4">
@@ -85,7 +85,8 @@
 
                         <div class="post-list-body">
                             <div class="post-list-meta">
-                                <span class="meta-item"><i class="oi oi-calendar me-1"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")</span>
+                                @* ngày bài đăng *@
+                                 <span class="meta-item"><i class="oi oi-calendar me-1"></i>##/##/##@* @post.CreatedDate?.ToString("dd/MM/yyyy")*@</span> 
                                 <span class="meta-item"><i class="oi oi-person me-1"></i> Ban Biên Tập</span>
                             </div>
 
@@ -541,13 +542,24 @@
         {
             try
             {
-                // TỐI ƯU TỐC ĐỘ: Gọi đúng hàm phân trang để lấy số lượng ít bài viết
+                // TỐI ƯU TỐC ĐỘ: Gọi song song các tác vụ
                 var categoriesTask = CategoryService.GetAllAsync();
                 var postsTask = PostService.GetPagedPostsAsync(page: 1, pageSize: 3);
 
                 await Task.WhenAll(categoriesTask, postsTask);
 
-                categories = await categoriesTask;
+                // Lấy tất cả categories từ task
+                var allCategories = await categoriesTask;
+
+                // --- ĐOẠN ĐIỀU CHỈNH: Lọc bỏ mục "Tuyên truyền" ---
+                if (allCategories != null)
+                {
+                    categories = allCategories
+                        .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+                // ------------------------------------------------
+
                 var result = await postsTask;
                 recentPosts = result.Posts;
             }

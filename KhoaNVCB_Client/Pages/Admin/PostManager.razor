@@ -11,277 +11,418 @@
 
 <PageTitle>Quản lý Bài viết - Admin</PageTitle>
 
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
-        <h2 class="fw-bold m-0 border-start border-danger border-4 ps-2" style="color: #1a237e;">QUẢN LÝ BÀI VIẾT</h2>
-        <div class="d-flex gap-2">
-            @* Nút tải lại dữ liệu nhanh *@
-            <button class="btn btn-outline-primary fw-bold shadow-sm d-inline-flex align-items-center"
-                    @onclick="RefreshData" disabled="@isLoading">
-                <i class="bi bi-arrow-clockwise me-1 @(isLoading ? "ani-spin" : "")"
-                   style="font-size: 1.1rem; display: inline-block;"></i>
-                <span>LÀM MỚI</span>
-            </button>
-            <a href="/admin/posts/create" class="btn btn-danger fw-bold shadow-sm">
-                <i class="oi oi-plus me-1"></i> VIẾT BÀI MỚI
-            </a>
+<div class="admin-content-wrapper py-4">
+    <div class="container">
+        @* Header Section: Cải thiện khả năng hiển thị *@
+        <div class="admin-header d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 pb-3 border-bottom gap-3">
+            <div class="header-title">
+                <h2 class="fw-bold m-0 border-start border-danger border-4 ps-2" style="color: #1a237e;">QUẢN LÝ BÀI VIẾT</h2>
+                <small class="text-muted ps-2">Quản lý nội dung bài giảng và tài liệu hệ thống</small>
+            </div>
+
+            <div class="header-actions d-flex gap-2">
+                @* Nút làm mới *@
+                <button class="btn btn-outline-primary fw-bold shadow-sm d-inline-flex align-items-center px-3"
+                        @onclick="RefreshData" disabled="@isLoading">
+                    <i class="bi bi-arrow-clockwise me-2 @(isLoading ? "ani-spin" : "")"></i>
+                    <span>LÀM MỚI</span>
+                </button>
+
+                @* Nút viết bài mới: Đã thêm z-index và đảm bảo không bị che *@
+                <a href="/admin/posts/create" class="btn btn-danger fw-bold shadow-sm d-inline-flex align-items-center px-4">
+                    <i class="oi oi-plus me-2"></i>
+                    <span>VIẾT BÀI MỚI</span>
+                </a>
+            </div>
         </div>
-    </div>
 
     @* TABS *@
     <ul class="nav nav-tabs mb-4 fw-bold">
         <li class="nav-item">
             <a class="nav-link @(activeTab == "Published" ? "active text-danger" : "text-secondary")"
                @onclick='() => SwitchTab("Published")' style="cursor:pointer">
-                BÀI ĐÃ ĐĂNG (@(posts?.Count ?? 0))
+                    BÀI ĐÃ ĐĂNG (@(filteredPosts?.Count ?? 0))
             </a>
         </li>
     </ul>
 
     <div class="card shadow-sm border-0 rounded-3 overflow-hidden">
         <div class="card-body p-0 table-responsive" style="min-height: 400px;">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light text-uppercase" style="font-size: 0.85rem;">
-                    <tr>
-                        <th class="ps-3" style="width: 100px;">Ảnh</th>
-                        <th>Nội dung bài viết</th>
-                        <th>Chuyên mục</th>
-                        <th>Ngày tạo</th>
-                        <th class="text-end pe-3">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (isLoading)
-                    {
-                        @* Giữ nguyên skeleton *@
-                    }
-                    else
-                    {
-                        @* Dùng Virtualize thay cho foreach *@
-                        <Virtualize Items="posts" Context="post" OverscanCount="5">
-                            <tr class="animate-fade-in">
-                                <td class="ps-3">
-                                    <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "/Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
-                                         class="rounded shadow-sm"
-                                         style="width: 70px; height: 45px; object-fit: cover;"
-                                         onerror="this.src='/images/no-image-available.png';" />
-                                </td>
-                                <td>
-                                    <div class="fw-bold text-navy text-truncate" style="max-width: 400px;">@post.Title</div>
-                                    <div class="small text-muted text-truncate" style="max-width: 400px;">@post.Summary</div>
-                                </td>
-                                <td><span class="badge bg-gold-soft text-gold">@post.CategoryName</span></td>
-                                <td class="small text-muted">@post.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td class="text-end pe-3">
-                                    <div class="btn-group">
-                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => EditPost(post.PostId)">
-                                            <i class="bi bi-pencil-square"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePost(post.PostId, post.Title)">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </Virtualize>
-                    }
-                </tbody>
-            </table>
+            @* FILTER BAR *@
+                <div class="filter-bar bg-white p-3 mb-3 rounded-3 shadow-sm border">
+                    <div class="row g-3 align-items-center">
+        @* Tìm kiếm tên *@
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control border-start-0" placeholder="Tìm kiếm theo tiêu đề..."
+                                       @bind="searchTerm" @bind:event="oninput" @onkeyup="ApplyFilter" />
+                            </div>
+                        </div>
+
+        @* Lọc theo chuyên mục *@
+                        <div class="col-md-4">
+                            <select class="form-select" @bind="selectedCategory" @bind:after="ApplyFilter">
+                                <option value="">Tất cả chuyên mục</option>
+                                @if (categories != null)
+                                {
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.CategoryName">@cat.CategoryName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+
+                        @* Sắp xếp *@
+                        <div class="col-md-3">
+                            <select class="form-select" @bind="sortBy" @bind:after="ApplyFilter">
+                                <option value="newest">Mới nhất</option>
+                                <option value="oldest">Cũ nhất</option>
+                                <option value="title-az">Tiêu đề (A-Z)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-uppercase" style="font-size: 0.85rem;">
+                        <tr>
+                            <th class="ps-3" style="width: 100px;">Ảnh</th>
+                            <th>Nội dung bài viết</th>
+                            <th>Chuyên mục</th>
+                            <th>Ngày tạo</th>
+                            <th class="text-end pe-3">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (isLoading)
+                        {
+                            @* Giữ nguyên skeleton *@
+                        }
+                        else
+                        {
+                            @* Dùng Virtualize thay cho foreach *@
+                            <Virtualize Items="filteredPosts" Context="post" OverscanCount="5">
+                                <tr class="animate-fade-in">
+                                    <td class="ps-3">
+                                        <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "/Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
+                                        class="rounded shadow-sm"
+                                        style="width: 70px; height: 45px; object-fit: cover;"
+                                        onerror="this.src='/images/no-image-available.png';" />
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-navy text-truncate" style="max-width: 400px;">@post.Title</div>
+                                        <div class="small text-muted text-truncate" style="max-width: 400px;">@post.Summary</div>
+                                    </td>
+                                    <td><span class="badge bg-gold-soft text-gold">@post.CategoryName</span></td>
+                                    <td class="small text-muted">@*@post.CreatedDate?.ToString("dd/MM/yyyy HH:mm")*@</td>
+                                    <td class="text-end pe-3">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" @onclick="() => EditPost(post.PostId)">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeletePost(post.PostId, post.Title)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </Virtualize>
+                        }
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
+    .filter-bar {
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    }
+
+    .filter-bar:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+    }
+
+    .form-control:focus, .form-select:focus {
+    border-color: #1a237e;
+    box-shadow: 0 0 0 0.2rem rgba(26, 35, 126, 0.1);
+    }
+
+    .input-group-text {
+    color: #6c757d;
+    }
+    .admin-content-wrapper {
+    margin-top: 20px; /* Tăng khoảng cách nếu Menu của bạn là Fixed-top */
+    position: relative;
+    z-index: 1; /* Thấp hơn menu nhưng đủ để tách biệt nội dung */
+    }
+
+    /* 2. Đảm bảo nút "Viết bài mới" luôn nổi bật và click được */
+    .header-actions {
+    position: relative;
+    z-index: 10;
+    }
+
+    .btn-danger {
+    transition: all 0.2s ease;
+    border: none;
+    background-color: #dc3545;
+    }
+
+    .btn-danger:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3) !important;
+    }
+
+    /* 3. Responsive cho Header (Dành cho di động) */
+    @@media (max-width: 768px) {
+    .admin-header
+
+    {
+    text-align: center;
+    }
+
+    .header-title {
+    margin-bottom: 10px;
+    }
+
+    .header-actions {
+    width: 100%;
+    justify-content: center;
+    }
+
+    .header-actions .btn {
+    flex: 1;
+    }
+
+    }
+
+    /* Giữ nguyên các Style cũ của bạn ở đây... */
+    .ani-spin {
+    animation: spin 1s linear infinite;
+    }
+    @@keyframes spin {
+    from
+
+    {
+    transform: rotate(0deg);
+    }
+
+    to {
+    transform: rotate(360deg);
+    }
+
+    }
     /* Làm rõ khung ảnh */
     .ps-3 img {
-        background-color: #f0f0f0;
-        display: block;
-        min-width: 70px;
-        min-height: 45px;
+    background-color: #f0f0f0;
+    display: block;
+    min-width: 70px;
+    min-height: 45px;
     }
 
     /* Định dạng lại nhóm nút thao tác */
     .btn-group .btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 35px;
-        height: 35px;
-        border: 1px solid #dee2e6 !important; /* Ép viền hiện lên */
-        margin-left: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 35px;
+    height: 35px;
+    border: 1px solid #dee2e6 !important; /* Ép viền hiện lên */
+    margin-left: 5px;
     }
 
     /* Hiệu ứng khi hover vào hàng */
     tr:hover {
-        background-color: rgba(26, 35, 126, 0.05) !important;
+    background-color: rgba(26, 35, 126, 0.05) !important;
     }
 
     /* Nếu dùng Open Iconic, đảm bảo font-family đúng */
     .oi {
-        font-family: 'Icons'; /* Tên font tùy thuộc thư viện bạn dùng */
-        font-style: normal;
+    font-family: 'Icons'; /* Tên font tùy thuộc thư viện bạn dùng */
+    font-style: normal;
     }
     /* Tổng thể container */
     .container {
-        max-width: 1200px;
-        animation: fadeIn 0.5s ease-in-out;
+    max-width: 1200px;
+    animation: fadeIn 0.5s ease-in-out;
     }
 
     /* Màu sắc tùy chỉnh */
     :root {
-        --navy-blue: #1a237e;
-        --gold-bg: #fff9c4;
-        --gold-text: #fbc02d;
-        --transition-speed: 0.3s;
+    --navy-blue: #1a237e;
+    --gold-bg: #fff9c4;
+    --gold-text: #fbc02d;
+    --transition-speed: 0.3s;
     }
 
     /* Hiệu ứng chuyển động cho hàng trong bảng */
     .animate-fade-in {
-        animation: slideUp 0.4s ease forwards;
+    animation: slideUp 0.4s ease forwards;
     }
 
     @@eyframes slideUp {
-        from
+    from
 
     {
-        opacity: 0;
-        transform: translateY(10px);
+    opacity: 0;
+    transform: translateY(10px);
     }
 
     to {
-        opacity: 1;
-        transform: translateY(0);
+    opacity: 1;
+    transform: translateY(0);
     }
 
     }
 
     /* Làm đẹp Table */
     .table thead {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #edf2f7;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #edf2f7;
     }
 
-        .table thead th {
-            font-weight: 700;
-            color: #4a5568;
-            letter-spacing: 0.05em;
-            padding: 1rem 0.75rem;
-        }
+    .table thead th {
+    font-weight: 700;
+    color: #4a5568;
+    letter-spacing: 0.05em;
+    padding: 1rem 0.75rem;
+    }
 
     .table tbody tr {
-        transition: all var(--transition-speed);
-        border-bottom: 1px solid #f1f1f1;
+    transition: all var(--transition-speed);
+    border-bottom: 1px solid #f1f1f1;
     }
 
-        .table tbody tr:hover {
-            background-color: #fcfcfd !important;
-            transform: scale(1.002);
-            box-shadow: inset 4px 0 0 var(--navy-blue);
-        }
+    .table tbody tr:hover {
+    background-color: #fcfcfd !important;
+    transform: scale(1.002);
+    box-shadow: inset 4px 0 0 var(--navy-blue);
+    }
 
     /* Badge chuyên mục */
     .bg-gold-soft {
-        background-color: var(--gold-bg);
-        color: #856404;
-        padding: 0.5em 0.8em;
-        border-radius: 6px;
-        font-weight: 600;
-        font-size: 0.75rem;
+    background-color: var(--gold-bg);
+    color: #856404;
+    padding: 0.5em 0.8em;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.75rem;
     }
 
     /* Tabs hiện đại */
     .nav-tabs {
-        border-bottom: 2px solid #edf2f7;
+    border-bottom: 2px solid #edf2f7;
     }
 
-        .nav-tabs .nav-link {
-            border: none;
-            padding: 1rem 1.5rem;
-            position: relative;
-            transition: color 0.3s ease;
-        }
+    .nav-tabs .nav-link {
+    border: none;
+    padding: 1rem 1.5rem;
+    position: relative;
+    transition: color 0.3s ease;
+    }
 
-            .nav-tabs .nav-link.active {
-                background: transparent;
-                border: none;
-                color: var(--navy-blue) !important;
-            }
+    .nav-tabs .nav-link.active {
+    background: transparent;
+    border: none;
+    color: var(--navy-blue) !important;
+    }
 
-                .nav-tabs .nav-link.active::after {
-                    content: '';
-                    position: absolute;
-                    bottom: -2px;
-                    left: 0;
-                    width: 100%;
-                    height: 3px;
-                    background: #dc3545; /* Màu đỏ như border-danger của bạn */
-                    border-radius: 3px 3px 0 0;
-                }
+    .nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #dc3545; /* Màu đỏ như border-danger của bạn */
+    border-radius: 3px 3px 0 0;
+    }
 
     /* Nút bấm (Buttons) */
     .btn-white {
-        background: #fff;
-        transition: all 0.2s;
+    background: #fff;
+    transition: all 0.2s;
     }
 
-        .btn-white:hover {
-            background: #f8f9fa;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+    .btn-white:hover {
+    background: #f8f9fa;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
 
     .btn-group .btn {
-        padding: 0.4rem 0.7rem;
-        margin: 0 2px;
+    padding: 0.4rem 0.7rem;
+    margin: 0 2px;
     }
 
     /* Ảnh xem trước */
     img.rounded {
-        border: 2px solid #fff;
-        transition: transform 0.3s ease;
+    border: 2px solid #fff;
+    transition: transform 0.3s ease;
     }
 
     tr:hover img.rounded {
-        transform: scale(1.1);
+    transform: scale(1.1);
     }
 
     /* Icon xoay khi loading */
     .ani-spin {
-        animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
     }
 
     @@keyframes spin {
-        from
+    from
 
     {
-        transform: rotate(0deg);
+    transform: rotate(0deg);
     }
 
     to {
-        transform: rotate(360deg);
+    transform: rotate(360deg);
     }
 
     }
 
     /* Custom Scrollbar cho table responsive */
     .table-responsive::-webkit-scrollbar {
-        height: 6px;
+    height: 6px;
     }
 
     .table-responsive::-webkit-scrollbar-thumb {
-        background: #cbd5e0;
-        border-radius: 10px;
+    background: #cbd5e0;
+    border-radius: 10px;
     }
 </style>
 
 
 @code {
+
     private string activeTab = "Published";
-    private List<PostListItemDto> posts = new(); // Khởi tạo list rỗng để tránh null check liên tục
+    private List<PostListItemDto> allSourcePosts = new(); // Khởi tạo list rỗng để tránh null check liên tục
+
+    // Dữ liệu gốc từ API
+    private List<PostListItemDto> filteredPosts = new();  // Dữ liệu sau khi lọc/sắp xếp
+    private List<CategoryDto> categories = new();      // Danh sách chuyên mục để lọc
     private bool isLoading = true;
 
+    // Các biến filter
+    private string searchTerm = "";
+    private string selectedCategory = "";
+    private string sortBy = "newest";
     protected override async Task OnInitializedAsync()
     {
         // Gọi dữ liệu ngay tại đây
+        var cats = await CategoryService.GetAllAsync();
+        if (cats != null)
+        {
+            categories = cats;
+        }
+
+        // 2. Lấy danh sách bài viết
         await LoadData();
     }
 
@@ -293,14 +434,14 @@
         try
         {
             // Gọi hàm mới siêu nhẹ
-            var allPosts = await PostService.GetAdminPostsAsync();
+            var data = await PostService.GetAdminPostsAsync();
 
-            if (allPosts != null)
+            if (data != null)
             {
-                posts = allPosts
-                    .Where(p => p.Status == activeTab)
-                    .OrderByDescending(p => p.CreatedDate)
-                    .ToList();
+
+                allSourcePosts = data;
+
+                ApplyFilter();
             }
         }
         catch (Exception ex)
@@ -313,14 +454,41 @@
             StateHasChanged();
         }
     }
+    private void ApplyFilter()
+    {
+        // 1. Lọc theo Tab (Trạng thái)
+        var query = allSourcePosts.AsEnumerable();
+        query = query.Where(p => p.Status == activeTab);
 
+        // 2. Lọc theo từ khóa tìm kiếm
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(p => p.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                                 || (p.Summary != null && p.Summary.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
+        }
+
+        // 3. Lọc theo chuyên mục
+        if (!string.IsNullOrWhiteSpace(selectedCategory))
+        {
+            query = query.Where(p => p.CategoryName == selectedCategory);
+        }
+
+        // 4. Sắp xếp
+        query = sortBy switch
+        {
+            "oldest" => query.OrderBy(p => p.CreatedDate),
+            "title-az" => query.OrderBy(p => p.Title),
+            _ => query.OrderByDescending(p => p.CreatedDate)
+        };
+
+        filteredPosts = query.ToList();
+    }
     // TỐI ƯU 3: Sử dụng phương thức không đồng bộ thực sự cho Tab
     private async Task SwitchTab(string tabName)
     {
         if (activeTab == tabName) return;
         activeTab = tabName;
-        posts.Clear(); // Xóa list cũ để hiện skeleton ngay
-        await LoadData();
+        ApplyFilter();
     }
     private async Task RefreshData() => await LoadData();
 

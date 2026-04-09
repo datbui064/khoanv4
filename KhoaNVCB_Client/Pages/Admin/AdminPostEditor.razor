@@ -9,18 +9,20 @@
 @implements IDisposable
 @inject PostService PostService
 @inject CategoryService CategoryService
+
+
 @inject PhotoUploadService PhotoUploadService
 @inject NavigationManager Nav
 @attribute [Authorize(Roles = "Admin")]
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="text-uppercase fw-bold border-start border-danger border-4 ps-2 m-0" style="color: #2c3e50;">
-        @(id > 0 ? "Chỉnh sửa bài viết" : "Soạn thảo bài giảng mới")
+        @(id > 0 ? "Chỉnh sửa bài viết" : "Soạn thảo nội dung mới")
     </h3>
     <div class="text-end">
         <button class="btn btn-outline-secondary me-2 px-4 fw-bold" @onclick='() => Nav.NavigateTo("/admin/posts")'>HỦY</button>
         <button class="btn btn-danger px-5 fw-bold shadow-sm" @onclick="HandleSave" disabled="@isSubmitting">
-            <i class="oi oi-check me-1"></i> @(isSubmitting ? "ĐANG XỬ LÝ..." : (id > 0 ? "CẬP NHẬT BÀI VIẾT" : "ĐĂNG BÀI MỚI"))
+            <i class="oi oi-check me-1"></i> @(isSubmitting ? "ĐANG XỬ LÝ..." : (id > 0 ? "CẬP NHẬT" : "ĐĂNG BÀI"))
         </button>
     </div>
 </div>
@@ -38,29 +40,17 @@
 }
 else
 {
-    <div class="card shadow-sm p-4 border-0 rounded-3 mb-5">
+    
 
-        <div class="mb-4 p-3 rounded-3" style="background-color: #e3f2fd; border: 1px dashed #2196f3;">
-            <label class="form-label fw-bold text-primary mb-2">
-                <i class="oi oi-document me-1"></i> Tải nội dung từ file Word (.docx)
-            </label>
-            <InputFile OnChange="HandleWordUpload" class="form-control" accept=".docx" />
-            @if (isParsingWord)
-            {
-                <div class="text-primary small mt-2">
-                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    Đang bóc tách dữ liệu từ file Word, vui lòng đợi...
-                </div>
-            }
-        </div>
-
+        @* 2. TIÊU ĐỀ *@
         <div class="mb-3">
             <label class="form-label fw-bold">Tiêu đề bài viết <span class="text-danger">*</span></label>
-            <input class="form-control form-control-lg fw-bold text-dark" @bind="post.Title" placeholder="Ví dụ: Phim tài liệu Ô nhiễm trắng..." />
+            <input class="form-control form-control-lg fw-bold text-dark" @bind="post.Title" placeholder="Nhập tiêu đề tại đây..." />
         </div>
 
+        @* 3. THÔNG TIN PHÂN LOẠI & ẢNH BÌA *@
         <div class="row bg-light p-3 rounded-2 mx-0 mb-3 border">
-            <div class="col-md-3 mb-3 mb-md-0">
+            <div class="col-md-3 mb-3">
                 <label class="form-label fw-bold">Chuyên mục <span class="text-danger">*</span></label>
                 <select class="form-select" @bind="post.CategoryId">
                     <option value="0">-- Chọn chuyên mục --</option>
@@ -71,56 +61,80 @@ else
                 </select>
             </div>
 
-            <div class="col-md-3 mb-3 mb-md-0">
-                <label class="form-label fw-bold">Loại minh họa chính</label>
-                <select class="form-select" @bind="post.SourceType">
-                    <option value="Image">Bài viết (Chỉ dùng Ảnh)</option>
-                    <option value="Video">Bài Video (YouTube)</option>
-                </select>
-            </div>
+        <div class="col-md-3 mb-3">
+            <label class="form-label fw-bold">Loại nội dung <span class="text-danger">*</span></label>
+            <select class="form-select border-primary" @bind="post.SourceType">
+                <option value="Image">Tin tức (Bài viết kèm ảnh)</option>
+                <option value="Video">Video (Clip/YouTube)</option>
+                <option value="Law">Quy định Pháp luật (PDF/Word)</option>
+                <option value="Document">Văn bản liên quan (PDF/Word)</option>
+                <option value="Propaganda">Tuyên truyền (Clip/Youtube)</option>
+            </select>
+        </div>
 
-            <div class="col-md-6">
-                <label class="form-label fw-bold">Ảnh bìa bài viết (Thumbnail)</label>
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Ảnh bìa (Thumbnail)</label>
                 <InputFile OnChange="HandleImageCoverUpload" class="form-control" accept="image/*" />
                 @if (isUploadingImage)
                 {
-                    <div class="text-primary small mt-1"><i class="spinner-border spinner-border-sm"></i> Đang tải ảnh lên Cloud...</div>
+                    <div class="text-primary small mt-1"><i class="spinner-border spinner-border-sm"></i> Đang tải ảnh...</div>
                 }
                 @if (!string.IsNullOrEmpty(post.ImageUrl))
                 {
-                    <div class="mt-2">
-                        <img src="@post.ImageUrl" class="img-thumbnail shadow-sm" style="height: 100px; object-fit: cover;" />
+                    <div class="mt-2 text-center">
+                        <img src="@post.ImageUrl" class="rounded shadow-sm" style="max-height: 120px; object-fit: contain;" />
                     </div>
                 }
             </div>
         </div>
 
-        @if (post.SourceType == "Video")
-        {
+        @* 4. PHẦN MỞ RỘNG THEO LOẠI NỘI DUNG *@
+    @if (post.SourceType == "Video" || post.SourceType == "Propaganda")
+    {
             <div class="mb-4 p-3 bg-white border border-danger rounded-2 shadow-sm" style="border-left-width: 5px !important;">
-                <label class="form-label fw-bold text-danger"><i class="oi oi-video"></i> Đường dẫn Video YouTube</label>
-                <input class="form-control" @bind="post.OriginalUrl" placeholder="Dán link YouTube vào đây (Ví dụ: https://www.youtube.com/watch?v=...)" />
-                <small class="text-muted mt-1 d-block">Video sẽ được nhúng trực tiếp lên đầu bài báo để người xem có thể xem ngay.</small>
+                <label class="form-label fw-bold text-danger"><i class="oi oi-video"></i> Link YouTube</label>
+                <input class="form-control" @bind="post.OriginalUrl" placeholder="https://www.youtube.com/watch?v=..." />
+                <small class="text-muted">Dán link YouTube để hệ thống tự nhúng video vào bài giảng.</small>
+            </div>
+        }
+    else if (post.SourceType == "Law" || post.SourceType == "Document" )
+        {
+            <div class="mb-4 p-3 bg-white border border-info rounded-2 shadow-sm" style="border-left-width: 5px !important;">
+                <label class="form-label fw-bold text-info"><i class="oi oi-paperclip"></i> Đính kèm tệp tài liệu (PDF, Word, Excel)</label>
+                <InputFile OnChange="HandleWordUpload" class="form-control" accept=".pdf,.doc,.docx,.xls,.xlsx" />
+
+                @if (isUploadingFile)
+                {
+                    <div class="text-info small mt-1"><span class="spinner-border spinner-border-sm"></span> Đang tải tệp...</div>
+                }
+
+                @if (!string.IsNullOrEmpty(post.OriginalUrl))
+                {
+                    <div class="mt-2 p-2 bg-light rounded border d-flex justify-content-between align-items-center">
+                        <span class="small text-truncate me-2">📎 File hiện tại: <strong>@GetFileName(post.OriginalUrl)</strong></span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick='() => post.OriginalUrl = ""'>Gỡ bỏ</button>
+                    </div>
+                }
             </div>
         }
 
-        <div class="mb-3 mt-3">
-            <label class="form-label fw-bold">Đoạn tóm tắt (Summary)</label>
-            <textarea class="form-control" rows="2" @bind="post.Summary" placeholder="Nhập giới thiệu ngắn gọn sẽ hiển thị ở trang chủ..."></textarea>
+        @* 5. TÓM TẮT VÀ NỘI DUNG CHÍNH *@
+        <div class="mb-3">
+            <label class="form-label fw-bold">Mô tả ngắn (Summary)</label>
+            <textarea class="form-control" rows="2" @bind="post.Summary" placeholder="Mô tả tóm tắt nội dung bài viết..."></textarea>
         </div>
 
-        <div class="mb-4" prerender="false">
-            <label class="form-label fw-bold">Nội dung chi tiết (Rich Text) <span class="text-danger">*</span></label>
+        <div class="mb-4">
+            <label class="form-label fw-bold">Nội dung chi tiết <span class="text-danger">*</span></label>
             <div id="tiny-editor"></div>
         </div>
-    </div>
+    
 }
 
 @code {
-    [Parameter]
-    public int id { get; set; }
+    [Parameter] public int id { get; set; }
 
-    private PostDto post = new() { SourceType = "Image", Status = "Published" };
+    private PostDto post = new() { SourceType = "", Status = "Published" };
     private List<CategoryDto> categories = new();
 
     private string? errorMessage;
@@ -128,27 +142,29 @@ else
     private bool isSubmitting = false;
     private bool isParsingWord = false;
     private bool isUploadingImage = false;
+    private bool isUploadingFile = false;
     private bool isEditorInitialized = false;
 
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
-        categories = await CategoryService.GetAllAsync();
-
-        if (id > 0)
+        try
         {
-            var existingPost = await PostService.GetByIdAsync(id);
-            if (existingPost != null)
+            categories = await CategoryService.GetAllAsync();
+            if (id > 0)
             {
-                post = existingPost;
-            }
-            else
-            {
-                errorMessage = "Không tìm thấy bài viết cần sửa.";
+                var res = await PostService.GetByIdAsync(id);
+                if (res != null) post = res;
+                else errorMessage = "Không tìm thấy nội dung.";
             }
         }
-        isLoading = false;
+        finally
+        {
+            isLoading = false;
+        }
     }
+
+    private string GetFileName(string url) =>
+        string.IsNullOrEmpty(url) ? "" : System.IO.Path.GetFileName(url);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -160,96 +176,105 @@ else
     }
 
     [JSInvokable]
-    public void UpdateContentFromJS(string content)
-    {
-        post.Content = content;
-    }
+    public void UpdateContentFromJS(string content) => post.Content = content;
 
-    // XỬ LÝ UPLOAD ẢNH BÌA (Gọi qua PhotoUploadService)
     private async Task HandleImageCoverUpload(InputFileChangeEventArgs e)
     {
         isUploadingImage = true;
-        StateHasChanged();
-
-        var uploadedUrl = await PhotoUploadService.UploadPhotoAsync(e.File);
-
-        if (!string.IsNullOrEmpty(uploadedUrl))
-        {
-            post.ImageUrl = uploadedUrl;
-        }
-        else
-        {
-            errorMessage = "Có lỗi xảy ra khi tải ảnh bìa lên hệ thống.";
-        }
-
+        var url = await PhotoUploadService.UploadPhotoAsync(e.File);
+        if (!string.IsNullOrEmpty(url)) post.ImageUrl = url;
         isUploadingImage = false;
-        StateHasChanged();
     }
+
+
 
     private async Task HandleWordUpload(InputFileChangeEventArgs e)
     {
-        isParsingWord = true;
-        errorMessage = null;
-        StateHasChanged();
+        isUploadingFile = true; // Bật loading cho file
+        isParsingWord = true;   // Bật loading cho parsing
 
         try
         {
-            var extractedText = await PostService.ExtractWordAsync(e.File);
-
-            if (!string.IsNullOrEmpty(extractedText))
+            // 1. Upload file lên server để lấy URL (Để lưu vào OriginalUrl cho Law/Document)
+            var fileUrl = await PhotoUploadService.UploadPhotoAsync(e.File);
+            if (!string.IsNullOrEmpty(fileUrl))
             {
-                post.Content = extractedText;
-                await JS.InvokeVoidAsync("setTinyMCEContent", post.Content);
+                post.OriginalUrl = fileUrl;
             }
-            else
+
+            // 2. Nếu là file .docx, trích xuất text để đổ vào Editor (Nếu người dùng muốn xem/sửa nội dung)
+            if (e.File.Name.EndsWith(".docx"))
             {
-                errorMessage = "Dữ liệu trả về từ file Word bị trống.";
+                var text = await PostService.ExtractWordAsync(e.File);
+                if (!string.IsNullOrEmpty(text))
+                {
+                    post.Content = text;
+                    await JS.InvokeVoidAsync("setTinyMCEContent", post.Content);
+                }
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi: {ex.Message}";
+            errorMessage = "Lỗi xử lý tệp: " + ex.Message;
         }
         finally
         {
+            isUploadingFile = false;
             isParsingWord = false;
             StateHasChanged();
         }
     }
 
-    public void Dispose()
-    {
-        JS.InvokeVoidAsync("tinymce.execCommand", "mceRemoveEditor", false, "tiny-editor");
-    }
-
     private async Task HandleSave()
     {
         errorMessage = null;
-
-        if (string.IsNullOrWhiteSpace(post.Title)) { errorMessage = "Vui lòng nhập tiêu đề bài viết."; return; }
-        if (post.CategoryId == null || post.CategoryId == 0) { errorMessage = "Vui lòng chọn chuyên mục cho bài giảng."; return; }
-        if (string.IsNullOrWhiteSpace(post.Content)) { errorMessage = "Nội dung bài viết không được để trống."; return; }
-
         isSubmitting = true;
 
-        bool success;
-        if (id > 0)
+        try
         {
-            success = await PostService.UpdateAsync(id, post);
-        }
-        else
-        {
-            success = await PostService.CreateAsync(post);
-        }
+            // 1. Chỉ gọi JS lấy nội dung nếu Editor tồn tại
+            if (isEditorInitialized)
+            {
+                var content = await JS.InvokeAsync<string>("getTinyMCEContent");
+                post.Content = content;
+            }
 
-        if (success)
-        {
-            Nav.NavigateTo("/admin/posts");
+            // 2. Logic riêng cho Video
+            if (post.SourceType == "Video")
+            {
+                if (string.IsNullOrWhiteSpace(post.OriginalUrl))
+                {
+                    errorMessage = "Vui lòng nhập Link Video!";
+                    isSubmitting = false;
+                    return;
+                }
+
+                // Đảm bảo Content không rỗng để tránh lỗi 400
+                if (string.IsNullOrWhiteSpace(post.Content))
+                {
+                    post.Content = $"<p>Nội dung video: {post.Title}</p>";
+                }
+            }
+
+            // 3. Gọi API lưu bài
+            bool success = (id > 0)
+                ? await PostService.UpdateAsync(id, post)
+                : await PostService.CreateAsync(post);
+
+            if (success) Nav.NavigateTo("/admin/posts");
+            else errorMessage = "Lỗi 400 từ máy chủ (Dữ liệu không hợp lệ)";
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = "Đã có lỗi xảy ra từ máy chủ khi lưu bài viết. Vui lòng thử lại!";
+            // Đây là nơi bắt lỗi StackTrace bạn vừa gửi
+            errorMessage = "Lỗi kết nối JavaScript: " + ex.Message;
+            Console.WriteLine("JS Interop Error: " + ex.StackTrace);
+        }
+        finally
+        {
             isSubmitting = false;
         }
     }
+    public void Dispose() =>
+        JS.InvokeVoidAsync("tinymce.execCommand", "mceRemoveEditor", false, "tiny-editor");
 }

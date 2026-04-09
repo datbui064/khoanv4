@@ -45,7 +45,14 @@
                         @if (post.SourceType == "Video")
                         {
                             <div class="ratio ratio-16x9 rounded-3 overflow-hidden shadow-sm">
-                                <iframe src="@GetEmbedUrl(post.OriginalUrl)" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <iframe src="@GetEmbedUrl(post.OriginalUrl)"
+                                        title="YouTube video player"
+                                        frameborder="0"
+                                      
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowfullscreen
+                                        loading="lazy">
+                                </iframe>
                             </div>
                         }
                         else
@@ -91,7 +98,7 @@
                             {
                                 <div class="card shadow-sm border-0 rounded-3 flex-shrink-0" style="width: 240px;">
                                     <img src="@(string.IsNullOrEmpty(p.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : p.ImageUrl)"
-                                         class="card-img-top" alt="@p.Title" style="height: 130px; object-fit: cover;" />
+                                    class="card-img-top" alt="@p.Title" style="height: 130px; object-fit: cover;" />
                                     <div class="card-body p-2 d-flex flex-column">
                                         <a href="/post/@p.PostId" class="text-decoration-none stretched-link">
                                             <h6 class="fw-bold text-dark text-truncate-2 mb-1" style="font-size: 0.9rem;">@p.Title</h6>
@@ -232,7 +239,7 @@
                             {
                                 <a href="/post/@p.PostId" class="text-decoration-none d-flex align-items-center article-link-hover">
                                     <img src="@(string.IsNullOrEmpty(p.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : p.ImageUrl)"
-                                         class="rounded-2 shadow-sm flex-shrink-0 me-2" alt="@p.Title" style="width: 75px; height: 55px; object-fit: cover;" />
+                                    class="rounded-2 shadow-sm flex-shrink-0 me-2" alt="@p.Title" style="width: 75px; height: 55px; object-fit: cover;" />
                                     <div>
                                         <h6 class="fw-bold text-dark text-truncate-2 mb-1" style="font-size: 0.85rem; line-height: 1.3;">@p.Title</h6>
                                         <small class="text-muted" style="font-size: 0.75rem;">@p.CreatedDate?.ToString("dd/MM/yyyy")</small>
@@ -258,12 +265,12 @@
                 </div>
                 <div class="modal-body text-center pt-2 pb-4 px-4">
                     <p class="text-muted small mb-4">Quét mã QR bằng Camera điện thoại hoặc Zalo để đọc bài viết</p>
-                    
+
                     @* ẢNH QR ĐƯỢC TẠO TỰ ĐỘNG TỪ API MIỄN PHÍ *@
                     <div class="p-3 bg-white border rounded-4 d-inline-block shadow-sm mb-4">
                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=@Uri.EscapeDataString(currentUrl)" alt="QR Code" style="width: 180px; height: 180px;" />
                     </div>
-                    
+
                     <div class="input-group mb-2 shadow-sm rounded-2 overflow-hidden">
                         <input type="text" class="form-control bg-light text-muted border-0" value="@currentUrl" readonly>
                         <button class="btn @(isCopied ? "btn-success" : "btn-primary") fw-bold px-3 border-0" @onclick="CopyLink">
@@ -280,119 +287,119 @@
 <style>
     /* ... (Phần CSS cũ của bài viết giữ nguyên) ... */
     .post-content {
-        font-size: 1.2rem;
-        line-height: 1.9;
-        color: #2c3e50;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.9;
+    color: #2c3e50;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     }
 
-        .post-content h1, .post-content h2, .post-content h3 {
-            color: #1a237e;
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
+    .post-content h1, .post-content h2, .post-content h3 {
+    color: #1a237e;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    }
 
-        .post-content img {
-            max-width: 100%;
-            height: auto !important;
-            border-radius: 8px;
-            display: block;
-            margin: 1.5rem auto;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+    .post-content img {
+    max-width: 100%;
+    height: auto !important;
+    border-radius: 8px;
+    display: block;
+    margin: 1.5rem auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
 
-        .post-content ul, .post-content ol {
-            margin-bottom: 1.5rem;
-            padding-left: 1.5rem;
-        }
+    .post-content ul, .post-content ol {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    }
 
-        .post-content li {
-            margin-bottom: 0.5rem;
-        }
+    .post-content li {
+    margin-bottom: 0.5rem;
+    }
 
-        .post-content table {
-            width: 100% !important;
-            border-collapse: collapse;
-            margin-bottom: 1.5rem;
-        }
+    .post-content table {
+    width: 100% !important;
+    border-collapse: collapse;
+    margin-bottom: 1.5rem;
+    }
 
-            .post-content table td, .post-content table th {
-                border: 1px solid #dee2e6;
-                padding: 8px;
-            }
+    .post-content table td, .post-content table th {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    }
 
     .category-link {
-        color: #555;
-        transition: all 0.2s;
+    color: #555;
+    transition: all 0.2s;
     }
 
-        .category-link:hover {
-            color: #dc3545;
-            padding-left: 5px;
-        }
+    .category-link:hover {
+    color: #dc3545;
+    padding-left: 5px;
+    }
 
     .active-cat {
-        color: #dc3545 !important;
-        font-weight: bold;
+    color: #dc3545 !important;
+    font-weight: bold;
     }
 
     .sidebar-box {
-        border-top: 4px solid #1a237e !important;
+    border-top: 4px solid #1a237e !important;
     }
 
     /* CSS CHO CHIPS MOBILE */
     .mobile-categories-chips {
-        width: 100%;
+    width: 100%;
     }
 
     .chips-container {
-        overflow-x: auto;
-        white-space: nowrap;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     }
 
-        .chips-container::-webkit-scrollbar {
-            display: none;
-        }
+    .chips-container::-webkit-scrollbar {
+    display: none;
+    }
 
     .chip-item {
-        display: inline-flex;
-        align-items: center;
-        padding: 8px 16px;
-        background-color: #f8f9fa;
-        color: #495057;
-        border-radius: 50px;
-        font-size: 0.95rem;
-        border: 1px solid #e9ecef;
-        transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    background-color: #f8f9fa;
+    color: #495057;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
     }
 
-        .chip-item .badge {
-            background-color: #e9ecef;
-            color: #6c757d;
-            border-radius: 50%;
-            padding: 4px 6px;
-            font-size: 0.75rem;
-        }
+    .chip-item .badge {
+    background-color: #e9ecef;
+    color: #6c757d;
+    border-radius: 50%;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    }
 
-        .chip-item:hover {
-            background-color: #e2e6ea;
-            color: #1a237e;
-        }
+    .chip-item:hover {
+    background-color: #e2e6ea;
+    color: #1a237e;
+    }
 
     .active-chip {
-        background-color: #dc3545;
-        color: white !important;
-        border-color: #dc3545;
-        font-weight: bold;
+    background-color: #dc3545;
+    color: white !important;
+    border-color: #dc3545;
+    font-weight: bold;
     }
 
-        .active-chip .badge {
-            background-color: white !important;
-            color: #dc3545 !important;
-        }
+    .active-chip .badge {
+    background-color: white !important;
+    color: #dc3545 !important;
+    }
 </style>
 
 @code {
@@ -443,18 +450,27 @@
     {
         if (firstRender)
         {
-            // Thử lấy thông tin đã lưu trong bộ nhớ trình duyệt
-            var savedName = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_name");
-            var savedEmail = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_email");
-            var savedWebsite = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_website");
-
-            if (!string.IsNullOrEmpty(savedName))
+            try
             {
-                commentFullName = savedName;
-                commentEmail = savedEmail ?? "";
-                commentWebsite = savedWebsite ?? "";
-                saveCommentInfo = true; // Tự động đánh dấu tick
-                StateHasChanged(); // Ép giao diện vẽ lại để hiện thông tin
+                // Khai báo biến trước hoặc dùng 'var' đúng phạm vi
+                var savedName = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_name");
+                var savedEmail = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_email");
+                var savedWebsite = await JS.InvokeAsync<string>("localStorage.getItem", "cmt_website");
+
+                if (!string.IsNullOrEmpty(savedName))
+                {
+                    commentFullName = savedName;
+                    commentEmail = savedEmail ?? "";    // Bây giờ biến đã tồn tại để gán
+                    commentWebsite = savedWebsite ?? ""; // Bây giờ biến đã tồn tại để gán
+                    saveCommentInfo = true;
+
+                    StateHasChanged();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Tránh việc lỗi JS làm hỏng toàn bộ logic C#
+                Console.WriteLine($"Lỗi truy cập LocalStorage: {ex.Message}");
             }
         }
     }
@@ -509,6 +525,7 @@
             }
         }
         else
+
         {
             commentError = "Đã xảy ra lỗi khi gửi bình luận. Vui lòng thử lại.";
         }
@@ -520,8 +537,21 @@
     private string GetEmbedUrl(string url)
     {
         if (string.IsNullOrEmpty(url)) return "";
-        if (url.Contains("youtube.com/watch?v=")) return url.Replace("watch?v=", "embed/");
-        if (url.Contains("youtu.be/")) return url.Replace("youtu.be/", "youtube.com/embed/");
+
+        // Xử lý link: https://www.youtube.com/watch?v=VIDEO_ID
+        if (url.Contains("youtube.com/watch?v="))
+        {
+            var videoId = url.Split("v=")[1].Split("&")[0];
+            return $"https://www.youtube.com/embed/{videoId}";
+        }
+
+        // Xử lý link rút gọn: https://youtu.be/VIDEO_ID
+        if (url.Contains("youtu.be/"))
+        {
+            var videoId = url.Split("youtu.be/")[1].Split("?")[0];
+            return $"https://www.youtube.com/embed/{videoId}";
+        }
+
         return url;
     }
 

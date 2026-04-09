@@ -6,28 +6,28 @@
 @inject PostService PostService
 @inject CategoryService CategoryService
 
-<PageTitle>@(currentCategory?.CategoryName ?? "Chuyên mục") - Khoa NV4</PageTitle>
+<PageTitle>@GetTypeName(type) - @currentCategory?.CategoryName</PageTitle>
 
 <div class="container py-5">
     <div class="row g-5">
+        @* CỘT TRÁI: DANH SÁCH BÀI VIẾT *@
         <div class="col-lg-8">
             <div class="category-header mb-4">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-2">
                         <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
-                        <li class="breadcrumb-item active text-danger" aria-current="page">@currentCategory?.CategoryName</li>
+                        <li class="breadcrumb-item"><a href="/category/@id" class="text-decoration-none text-muted">@currentCategory?.CategoryName</a></li>
+                        <li class="breadcrumb-item active text-danger">@GetTypeName(type)</li>
                     </ol>
                 </nav>
-                <h2 class="fw-bold text-uppercase position-relative ps-3 border-start border-4 border-danger">
-                    @(type == "videos" ? "Video" : "Tin tức") - @(currentCategory?.CategoryName ?? "...")
+                <h2 class="fw-bold text-uppercase ps-3 border-start border-4 border-danger">
+                    @GetTypeName(type)
                 </h2>
             </div>
 
             @if (isLoading)
             {
-                <div class="d-flex justify-content-center py-5">
-                    <div class="spinner-grow text-danger" role="status"></div>
-                </div>
+                <div class="text-center py-5"><div class="spinner-grow text-danger"></div></div>
             }
             else if (filteredPosts == null || !filteredPosts.Any())
             {
@@ -41,44 +41,28 @@
                 <div class="list-container">
                     @foreach (var post in filteredPosts)
                     {
-                        <div class="card mb-2 border-0 shadow-sm post-list-card overflow-hidden">
+                        <div class="card mb-3 border-0 shadow-sm post-list-card overflow-hidden">
                             <div class="row g-0 align-items-center">
                                 <div class="col-3 col-md-2 p-2">
-                                    <div class="ratio ratio-1x1 overflow-hidden rounded-3 shadow-sm border">
-                                        <img src="@(string.IsNullOrEmpty(post.OriginalUrl) ? "images/Logo_hoc_vien_ANND.png" : post.OriginalUrl)"
-                                             class="object-fit-cover"
-                                             alt="@post.Title" />
+                                    <div class="ratio ratio-1x1 overflow-hidden rounded-3 border">
+                                        <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "images/Logo_hoc_vien_ANND.png" : post.ImageUrl)" class="object-fit-cover" alt="@post.Title" />
                                     </div>
                                 </div>
-
                                 <div class="col-9 col-md-10">
-                                    <div class="card-body py-2 px-3 d-flex flex-column justify-content-center">
-
-                                        <a href="/post/@post.PostId" class="text-decoration-none stretched-link mb-1">
-                                            <h5 class="card-title fw-bold text-dark mb-0 fs-6 line-clamp-2" style="line-height: 1.3;">
-                                                @post.Title
-                                            </h5>
+                                    <div class="card-body py-2 px-3">
+                                        <a href="/post/@post.PostId" class="text-decoration-none stretched-link">
+                                            <h5 class="card-title fw-bold text-dark mb-1 fs-6 line-clamp-2">@post.Title</h5>
                                         </a>
-
-                                        @if (!string.IsNullOrEmpty(post.Summary))
-                                        {
-                                            <p class="card-text text-muted small mb-2 d-none d-md-block line-clamp-1" style="font-size: 0.85rem;">
-                                                @post.Summary
-                                            </p>
-                                        }
-
-                                        <div class="d-flex align-items-center gap-3 mt-auto">
-                                            <span class="text-muted" style="font-size: 0.75rem;">
-                                                <i class="oi oi-calendar me-1"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")
-                                            </span>
-                                            <span class="text-danger fw-medium" style="font-size: 0.75rem;">
-                                                <i class="oi oi-eye me-1"></i> @(new Random().Next(100, 500)) views
-                                            </span>
+                                        <p class="card-text text-muted small mb-2 d-none d-md-block line-clamp-1">@post.Summary</p>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <span class="text-muted small"><i class="oi oi-calendar me-1"></i> @post.CreatedDate?.ToString("dd/MM/yyyy")</span>
+                                            @if (type == "documents")
+                                            {
+                                                <span class="badge bg-info text-white">Văn bản</span>
+                                            }
                                         </div>
-
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     }
@@ -86,30 +70,20 @@
             }
         </div>
 
+        @* CỘT PHẢI: SIDEBAR CHUYÊN MỤC *@
         <div class="col-lg-4">
             <div class="sticky-top" style="top: 2rem;">
-                <div class="modern-sidebar p-4 bg-white">
-                    <div class="sidebar-title-wrapper mb-4">
-                        <h6 class="sidebar-title">CHUYÊN MỤC BÀI VIẾT</h6>
-                        <div class="title-underline"></div>
-                    </div>
-
-                    <div class="category-stack">
+                <div class="modern-sidebar p-4 bg-white shadow-sm rounded-4">
+                    <h6 class="fw-bold mb-3 text-uppercase border-bottom pb-2">Chuyên mục khác</h6>
+                    <div class="category-stack d-flex flex-column gap-2">
                         @if (categories != null)
                         {
-                            @foreach (var parent in categories.Where(c => c.ParentId == null))
+                            @foreach (var cat in categories.Where(c => c.ParentId == null))
                             {
-                                var isActive = parent.CategoryId == id;
-                                <div class="category-item">
-                                    <a href="/category/@parent.CategoryId/articles"
-                                       class="category-link @(isActive ? "active" : "")">
-                                        <div class="link-content">
-                                            <span class="category-name">@parent.CategoryName</span>
-                                            <span class="category-count">@GetPostCount(parent.CategoryName)</span>
-                                        </div>
-                                        <i class="oi oi-chevron-right arrow-icon"></i>
-                                    </a>
-                                </div>
+                                <a href="/category/@cat.CategoryId/@type" class="category-link @(cat.CategoryId == id ? "active" : "")">
+                                    <span class="small fw-bold">@cat.CategoryName</span>
+                                    <i class="oi oi-chevron-right small"></i>
+                                </a>
                             }
                         }
                     </div>
@@ -120,33 +94,20 @@
 </div>
 
 <style>
-    .post-list-card {
-        transition: all 0.3s ease;
-        border: 1px solid transparent !important;
+    .post-list-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1) !important;
     }
 
-        .post-list-card:hover {
-            background-color: #fff9f9; /* Đổi màu nền nhẹ khi di chuột */
-            border-color: #f8d7da !important;
-            transform: translateY(-2px);
+        .post-list-card:hover .card-title {
+            color: #dc3545 !important;
         }
 
-        .post-list-card .card-body {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            height: 100%;
-        }
-
-    /* Thu nhỏ dòng chữ tóm tắt hơn nữa */
     .line-clamp-1 {
         display: -webkit-box;
         -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         overflow: hidden;
-    }
-    body {
-        background-color: #f4f6f9;
     }
 
     .line-clamp-2 {
@@ -156,137 +117,27 @@
         overflow: hidden;
     }
 
-    /* List Card Style */
-    .post-list-card {
-        border-radius: 1rem !important;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-        .post-list-card:hover {
-            transform: scale(1.01);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
-        }
-
-            .post-list-card:hover .card-title {
-                color: #dc3545 !important;
-            }
-
-   
-    /* Container chính của Sidebar */
-    .modern-sidebar {
-        border-radius: 20px;
-        border: 1px solid rgba(0,0,0,0.05);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    }
-
-    /* Tiêu đề Chuyên mục */
-    .sidebar-title-wrapper {
-        position: relative;
-    }
-
-    .sidebar-title {
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-weight: 800; /* Cực đậm */
-        font-size: 1.1rem; /* Kích thước vừa phải */
-        color: #1a202c; /* Màu đen xanh thanh lịch */
-        margin: 0;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-
-    }
-
-    .title-underline {
-        width: 40px;
-        height: 3px;
-        background: #dc3545;
-        margin-top: 8px;
-        border-radius: 2px;
-    }
-
-    /* Stack các item chuyên mục */
-    .category-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-
-    /* Link chuyên mục */
     .category-link {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        padding: 14px 18px;
-        border-radius: 12px;
-        color: #4a5568 !important;
-        text-decoration: none !important;
+        padding: 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: #444;
         background: #f8f9fa;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
+        transition: 0.3s;
     }
 
-    .category-name {
-        font-weight: 600;
-        font-size: 0.85rem;
-        z-index: 1;
-    }
-
-    .category-count {
-        font-size: 0.7rem;
-        background: #fff;
-        color: #888;
-        padding: 2px 10px;
-        border-radius: 20px;
-        margin-left: 10px;
-        border: 1px solid #eee;
-        transition: all 0.3s;
-    }
-
-    .arrow-icon {
-        font-size: 0.7rem;
-        opacity: 0;
-        transform: translateX(-10px);
-        transition: all 0.3s;
-        z-index: 1;
-    }
-
-    /* Hiệu ứng HOVER */
-    .category-link:hover {
-        background: #fff;
-        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.15);
-        color: #dc3545 !important;
-        transform: translateX(5px);
-    }
-
-        .category-link:hover .arrow-icon {
-            opacity: 1;
-            transform: translateX(0);
+        .category-link:hover {
+            background: #fff;
+            color: #dc3545;
+            padding-left: 18px;
         }
 
-    /* Trạng thái ACTIVE (Đang chọn) */
-    .category-link.active {
-        background: linear-gradient(135deg, #dc3545, #b02a37) !important;
-        color: #fff !important;
-        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
-    }
-
-        .category-link.active .category-name {
+        .category-link.active {
+            background: #dc3545;
             color: #fff !important;
         }
-
-        .category-link.active .category-count {
-            background: rgba(255,255,255,0.2);
-            border-color: transparent;
-            color: #fff;
-        }
-
-        .category-link.active .arrow-icon {
-            opacity: 1;
-            transform: translateX(0);
-            color: #fff;
-        }
-
-        
 </style>
 
 @code {
@@ -296,45 +147,25 @@
     private bool isLoading = true;
     private CategoryDto? currentCategory;
     private List<CategoryDto>? categories;
-
-    // filteredPosts bây giờ chỉ chứa 10-20 bài thay vì toàn bộ DB
     private List<PostDto>? filteredPosts;
+
+    private string GetTypeName(string t) => t.ToLower() switch
+    {
+        "articles" => "Tin tức",
+        "videos" => "Video",
+        "laws" => "Quy định pháp luật",
+        "documents" => "Văn bản liên quan",
+        _ => "Nội dung"
+    };
 
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
-        try
-        {
-            // 1. Tải danh sách chuyên mục cho Sidebar (chỉ tải 1 lần nếu chưa có)
-            if (categories == null)
-                categories = await CategoryService.GetAllAsync();
+        if (categories == null) categories = await CategoryService.GetAllAsync();
+        currentCategory = categories?.FirstOrDefault(c => c.CategoryId == id);
 
-            if (categories != null)
-                currentCategory = categories.FirstOrDefault(c => c.CategoryId == id);
-
-            // 2. TỐI ƯU: Gọi API paged thay vì GetAllAsync
-            // Chúng ta truyền trực tiếp id và type vào Server để lọc tại SQL
-            var result = await PostService.GetPagedPostsAsync(page: 1, pageSize: 15, categoryId: id, sourceType: type);
-
-            filteredPosts = result.Posts;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Lỗi tải chuyên mục: {ex.Message}");
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
-    }
-
-    // Hàm đếm số lượng bài viết cho Sidebar
-    // Lưu ý: Nếu muốn nhanh tuyệt đối, bạn nên bổ sung 1 API đếm riêng,
-    // nhưng hiện tại với số lượng bài vừa phải, dùng GetAllAsync cho sidebar là tạm ổn.
-    private int GetPostCount(string categoryName)
-    {
-        // Có thể để giá trị mặc định hoặc gọi 1 API đếm nhỏ gọn
-        return 0; // Hoặc logic đếm của bạn
+        var result = await PostService.GetPagedPostsAsync(page: 1, pageSize: 20, categoryId: id, sourceType: type);
+        filteredPosts = result.Posts;
+        isLoading = false;
     }
 }

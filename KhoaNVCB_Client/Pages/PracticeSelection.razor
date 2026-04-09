@@ -3,6 +3,7 @@
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject NavigationManager NavManager
+@attribute [Authorize]
 
 <style>
     :root {
@@ -194,6 +195,12 @@
         {
             // Gọi API lấy danh sách Category để đổ vào Dropdown
             categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/Categories");
+            if (categories != null)
+            {
+                categories = categories
+                    .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
         }
         catch { /* Xử lý lỗi nếu cần */ }
     }

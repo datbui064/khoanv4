@@ -1,9 +1,10 @@
 ﻿@page "/practice-setup"
+@attribute [AllowAnonymous]
 @using KhoaNVCB_Client.Models
 @using System.Net.Http.Json
 @inject HttpClient Http
 @inject NavigationManager NavManager
-@attribute [Authorize]
+@inject IJSRuntime JS
 
 <style>
     :root {
@@ -119,6 +120,23 @@
                     else
                     {
                         <div class="mb-4">
+                            <label class="section-title">Thông tin của bạn</label>
+                            <input type="text" class="form-control mb-2 custom-select" @bind="fullName" placeholder="Họ và tên (Bắt buộc)" />
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <input type="text" class="form-control custom-select" @bind="studentId" placeholder="Mã SV / Email" />
+                                </div>
+                                <div class="col-6">
+                                    <input type="text" class="form-control custom-select" @bind="className" placeholder="Lớp" />
+                                </div>
+                            </div>
+                            @if (showValidationError)
+                            {
+                                <small class="text-danger mt-1 d-block"><i class="bi bi-exclamation-circle"></i> Vui lòng nhập ít nhất Họ và Tên!</small>
+                            }
+                        </div>
+
+                        <div class="mb-4">
                             <label class="section-title">1. Chủ đề ôn tập</label>
                             <select class="form-select form-select-lg custom-select shadow-none" @bind="selectedCategoryId">
                                 <option value="0">Tất cả danh mục kiến thức</option>
@@ -138,62 +156,67 @@
                                         <input type="radio" class="btn-check" name="countOptions" id="count-@num"
                                                value="@num" checked="@(selectedCount == num)"
                                                @onclick="() => selectedCount = num">
-                                        <label class="btn w-100" for="count-@num">
-                                            <span class="fs-5">@num</span>
-                                            <span style="font-size: 0.6rem; opacity: 0.7;">CÂU</span>
-                                        </label>
+                                            <label class="btn w-100" for="count-@num">
+                                                <span class="fs-5">@num</span>
+                                                <span style="font-size: 0.6rem; opacity: 0.7;">CÂU</span>
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="section-title">3. Thời gian giới hạn</label>
+                                <div class="row g-2 option-selector">
+                                    @foreach (var time in new[] { 5, 15, 30, 45 })
+                                    {
+                                        <div class="col-3">
+                                            <input type="radio" class="btn-check" name="timeOptions" id="time-@time"
+                                                   value="@time" checked="@(selectedMinutes == time)"
+                                                   @onclick="() => selectedMinutes = time">
+                                                <label class="btn w-100" for="time-@time">
+                                                    <span class="fs-5">@time</span>
+                                                    <span style="font-size: 0.6rem; opacity: 0.7;">PHÚT</span>
+                                                </label>
+                                            </div>
+                                        }
                                     </div>
-                                }
-                            </div>
-                        </div>
+                                </div>
 
-                        <div class="mb-4">
-                            <label class="section-title">3. Thời gian giới hạn</label>
-                            <div class="row g-2 option-selector">
-                                @foreach (var time in new[] { 5, 15, 30, 45 })
-                                {
-                                    <div class="col-3">
-                                        <input type="radio" class="btn-check" name="timeOptions" id="time-@time"
-                                               value="@time" checked="@(selectedMinutes == time)"
-                                               @onclick="() => selectedMinutes = time">
-                                        <label class="btn w-100" for="time-@time">
-                                            <span class="fs-5">@time</span>
-                                            <span style="font-size: 0.6rem; opacity: 0.7;">PHÚT</span>
-                                        </label>
+                                <div class="d-flex align-items-center p-3 rounded-3 bg-light mb-4">
+                                    <i class="bi bi-clock-history text-primary me-3 fs-4"></i>
+                                    <div style="font-size: 0.85rem;" class="text-secondary">
+                                        Tổng cộng <strong>@selectedCount câu hỏi</strong> trong <strong>@selectedMinutes phút</strong>. Sẵn sàng?
                                     </div>
-                                }
-                            </div>
-                        </div>
+                                </div>
 
-                        <div class="d-flex align-items-center p-3 rounded-3 bg-light mb-4">
-                            <i class="bi bi-clock-history text-primary me-3 fs-4"></i>
-                            <div style="font-size: 0.85rem;" class="text-secondary">
-                                Tổng cộng <strong>@selectedCount câu hỏi</strong> trong <strong>@selectedMinutes phút</strong>. Sẵn sàng?
-                            </div>
+                                <button class="btn btn-start btn-lg w-100 shadow-lg text-uppercase" @onclick="StartPractice">
+                                    Bắt đầu thử thách
+                                    <i class="bi bi-rocket-takeoff-fill ms-2"></i>
+                                </button>
+                            }
                         </div>
-
-                        <button class="btn btn-start btn-lg w-100 shadow-lg text-uppercase" @onclick="StartPractice">
-                            Bắt đầu thử thách
-                            <i class="bi bi-rocket-takeoff-fill ms-2"></i>
-                        </button>
-                    }
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
-
 
 @code {
-    private List<CategoryDto>? categories; // Giả sử bạn đã có Model CategoryDto
+    private List<CategoryDto>? categories;
     private int selectedCategoryId = 0;
     private int selectedCount = 20;
     private int selectedMinutes = 15;
+
+    // Các biến hứng thông tin người dùng
+    private string fullName = "";
+    private string studentId = "";
+    private string className = "";
+    private bool showValidationError = false;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Gọi API lấy danh sách Category để đổ vào Dropdown
             categories = await Http.GetFromJsonAsync<List<CategoryDto>>("api/Categories");
             if (categories != null)
             {
@@ -205,13 +228,25 @@
         catch { /* Xử lý lỗi nếu cần */ }
     }
 
-    private void StartPractice()
+    private async Task StartPractice()
     {
-        // Điều hướng sang trang Practice mà chúng ta đã làm ở bước trước
+        // Kiểm tra hợp lệ: Bắt buộc nhập Họ và Tên
+        if (string.IsNullOrWhiteSpace(fullName))
+        {
+            showValidationError = true;
+            return;
+        }
+        showValidationError = false;
+
+        // Lưu thông tin vào SessionStorage
+        await JS.InvokeVoidAsync("sessionStorage.setItem", "p_fullName", fullName.Trim());
+        await JS.InvokeVoidAsync("sessionStorage.setItem", "p_studentId", string.IsNullOrWhiteSpace(studentId) ? "N/A" : studentId.Trim());
+        await JS.InvokeVoidAsync("sessionStorage.setItem", "p_className", string.IsNullOrWhiteSpace(className) ? "N/A" : className.Trim());
+
+        // Điều hướng sang trang làm bài
         NavManager.NavigateTo($"/practice/{selectedCategoryId}/{selectedCount}/{selectedMinutes}");
     }
 
-    // Class phụ để hứng dữ liệu Category
     public class CategoryDto
     {
         public int CategoryId { get; set; }

@@ -48,6 +48,7 @@
 
     @* --- BÀI VIẾT NỔI BẬT --- *@
     <section id="featured-posts" class="mb-5">
+
         <div class="section-header d-flex justify-content-between align-items-end mb-4">
             <div>
                 <h2 class="section-title text-navy fw-800">Tin tức nổi bật</h2>
@@ -542,35 +543,61 @@
         {
             try
             {
-                // TỐI ƯU TỐC ĐỘ: Gọi song song các tác vụ
+                isLoading = true;
+                // StateHasChanged(); // Không bắt buộc ở đầu vì cuối cùng đã có
+
+                // 1. Gọi song song 2 task
+                // Dùng GetPublicPostsPagedAsync vì nó trả về PagedResultDto chứa Items
                 var categoriesTask = CategoryService.GetAllAsync();
-                var postsTask = PostService.GetPagedPostsAsync(page: 1, pageSize: 3);
+                var postsTask = PostService.GetPublicPostsPagedAsync(
+                    page: 1,
+                    pageSize: 3,
+                    searchTerm: null,
+                    categoryName: null,
+                    sortBy: "newest" // Đảm bảo đúng tham số sortBy của bạn
+                );
 
                 await Task.WhenAll(categoriesTask, postsTask);
 
-                // Lấy tất cả categories từ task
+                // 2. Xử lý Categories
                 var allCategories = await categoriesTask;
-
-                // --- ĐOẠN ĐIỀU CHỈNH: Lọc bỏ mục "Tuyên truyền" ---
                 if (allCategories != null)
                 {
                     categories = allCategories
                         .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase))
                         .ToList();
                 }
-                // ------------------------------------------------
 
+                // 3. Xử lý Bài viết (Posts)
                 var result = await postsTask;
-                recentPosts = result.Posts;
+                if (result != null && result.Items != null)
+                {
+                    // Ép kiểu từ PostListItemDto sang PostDto nếu cần,
+                    // hoặc sửa biến recentPosts thành List<PostListItemDto>
+                    recentPosts = result.Items.Select(i => new PostDto
+                        {
+                            PostId = i.PostId,
+                            Title = i.Title,
+                            Summary = i.Summary,
+                            ImageUrl = i.ImageUrl,
+                            CategoryName = i.CategoryName,
+                            CreatedDate = i.CreatedDate
+                        }).ToList();
+                }
+                else
+                {
+                    recentPosts = new List<PostDto>();
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"Lỗi tại Index: {ex.Message}");
+                recentPosts = new List<PostDto>(); // Tránh null để giao diện không crash
             }
             finally
             {
                 isLoading = false;
-                StateHasChanged();
+                StateHasChanged(); // Cập nhật lại UI sau khi đã có dữ liệu
             }
         }
     }

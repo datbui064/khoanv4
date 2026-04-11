@@ -131,7 +131,7 @@ namespace KhoaNVCB_Client.Services
             }
         }
         // Thêm hàm này vào PostService.cs
-        public async Task<List<PostListItemDto>> GetAdminPostsAsync()
+        /*public async Task<List<PostListItemDto>> GetAdminPostsAsync()
         {
             try
             {
@@ -143,7 +143,66 @@ namespace KhoaNVCB_Client.Services
                 Console.WriteLine($"Lỗi tải danh sách Admin: {ex.Message}");
                 return new List<PostListItemDto>();
             }
+        }*/
+        //Lấy danh sách không phân trang
+
+        // Đừng quên using thêm Dtos nếu cần: using KhoaNVCB_Client.Models; (hoặc namespace chứa PagedResultDto)
+
+        public async Task<PagedResultDto<PostListItemDto>?> GetAdminPostsPagedAsync(
+        int page, int pageSize, string? searchTerm, string? categoryName, string sortBy, string? status = null)
+        {
+            try
+            {
+                // --- ĐÃ SỬA: Kiểm tra tồn tại trước khi Get ---
+                if (_localStorage.Exists("authToken"))
+                {
+                    var token = _localStorage.Get<string>("authToken");
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        _http.DefaultRequestHeaders.Authorization =
+                            new AuthenticationHeaderValue("Bearer", token.Replace("\"", ""));
+                    }
+                }
+                // ----------------------------------------------
+
+                var url = $"api/Posts/admin-paged?page={page}&pageSize={pageSize}";
+
+                if (!string.IsNullOrWhiteSpace(searchTerm)) url += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
+                if (!string.IsNullOrWhiteSpace(categoryName)) url += $"&categoryName={Uri.EscapeDataString(categoryName)}";
+                if (!string.IsNullOrWhiteSpace(status)) url += $"&status={Uri.EscapeDataString(status)}";
+                url += $"&sortBy={sortBy}";
+
+                return await _http.GetFromJsonAsync<PagedResultDto<PostListItemDto>>(url);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi lấy danh sách Admin: {ex.Message}");
+                return null;
+            }
         }
+
+        public async Task<PagedResultDto<PostListItemDto>?> GetPublicPostsPagedAsync(
+    int page, int pageSize, string? searchTerm, string? categoryName, string sortBy)
+        {
+            try
+            {
+                // Gọi thẳng API "paged" mới tạo, không cần ép trạng thái nữa vì Backend đã tự chặn
+                var url = $"api/Posts/paged?page={page}&pageSize={pageSize}";
+
+                if (!string.IsNullOrWhiteSpace(searchTerm)) url += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
+                if (!string.IsNullOrWhiteSpace(categoryName)) url += $"&categoryName={Uri.EscapeDataString(categoryName)}";
+                url += $"&sortBy={sortBy}";
+
+                // Bắn request không cần token
+                return await _http.GetFromJsonAsync<PagedResultDto<PostListItemDto>>(url);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi lấy bài viết Public: {ex.Message}");
+                return null;
+            }
+        }
+
         // Lấy danh sách bình luận
         public async Task<List<CommentDto>> GetCommentsByPostAsync(int postId)
         {

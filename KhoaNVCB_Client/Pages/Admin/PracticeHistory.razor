@@ -1,0 +1,324 @@
+﻿﻿
+@page "/admin/practice-history"
+@using KhoaNVCB_Client.Services
+@using Microsoft.AspNetCore.Authorization
+@using System.Text.Json
+
+@* CHỈ ADMIN MỚI ĐƯỢC VÀO TRANG NÀY *@
+@attribute [Authorize(Roles = "Admin")]
+
+@inject QuizService QuizService
+@inject NavigationManager Navigation
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-uppercase border-start border-success border-4 ps-2 mb-0" style="color: #1b5e20;">
+                LỊCH SỬ TỰ ÔN TẬP
+            </h3>
+            <p class="text-muted small mt-1 mb-0">Danh sách các bài luyện tập tự do của sinh viên</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-success fw-bold rounded-pill px-3" @onclick="LoadData">
+                <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
+            </button>
+            <button class="btn btn-outline-secondary fw-bold rounded-pill px-4" @onclick="GoBack">
+                <i class="bi bi-arrow-left me-2"></i> Trở về
+            </button>
+        </div>
+    </div>
+
+    @* --- THANH BỘ LỌC (FILTER BAR) --- *@
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                @* 1. Lọc theo Lớp *@
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-people me-1"></i> Lọc theo Lớp:</label>
+                    <select class="form-select fw-semibold text-navy-blue" @bind="selectedClass" @bind:after="ApplyFilter">
+                        <option value="">-- Tất cả các lớp --</option>
+                        @foreach (var cls in availableClasses)
+                        {
+                            <option value="@cls">@cls</option>
+                        }
+                    </select>
+                </div>
+
+                @* 2. Lọc theo Ngày nộp bài *@
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-date me-1"></i> Lọc theo Ngày nộp:</label>
+                    <input type="date" class="form-control fw-semibold text-navy-blue" @bind="selectedDate" @bind:after="ApplyFilter" />
+                </div>
+
+                @* 3. Nút xóa bộ lọc *@
+                <div class="col-md-2">
+                    <button class="btn btn-light border w-100 text-danger fw-bold" @onclick="ClearFilters" disabled="@(!IsFiltered)">
+                        <i class="bi bi-x-circle me-1"></i> Xóa lọc
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* --- KẾT THÚC THANH BỘ LỌC --- *@
+
+    <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+        <div class="card-body p-0 table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-dark text-white text-uppercase" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+                    <tr>
+                        <th class="ps-4 text-center" style="width: 80px;">TOP</th>
+                        <th>Họ và Tên</th>
+                        <th>Mã SV / Email</th>
+                        <th>Lớp</th>
+                        <th class="text-center">Số câu đúng</th>
+                        <th class="text-center">Đánh giá</th>
+                        <th class="text-end pe-4">Nộp bài lúc</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (isLoading)
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <div class="spinner-border text-success mb-2" role="status"></div>
+                                <div class="text-muted fw-semibold">Đang tải dữ liệu...</div>
+                            </td>
+                        </tr>
+                    }
+                    else if (historyList == null || !historyList.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="bi bi-inbox fs-1 text-muted mb-3 d-block"></i>
+                                <h5 class="text-muted fw-bold">Chưa có dữ liệu</h5>
+                                <p class="text-muted small">Hiện tại chưa có sinh viên nào tham gia ôn tập tự do.</p>
+                            </td>
+                        </tr>
+                    }
+
+                    else
+                    {
+                        int rank = ((currentPage - 1) * pageSize) + 1;
+                        @foreach (var item in PagedHistory)
+                        {
+                            // Ép kiểu an toàn từ JsonElement
+                            string fullName = item.GetProperty("fullName").GetString() ?? "Không tên";
+                            string studentId = item.GetProperty("studentIdOrEmail").GetString() ?? "N/A";
+                            string className = item.GetProperty("className").GetString() ?? "N/A";
+                            int correct = item.GetProperty("correctAnswers").GetInt32();
+                            int total = item.GetProperty("totalQuestions").GetInt32();
+                            DateTime attemptDate = item.GetProperty("attemptDate").GetDateTime();
+
+                            double percent = total > 0 ? (double)correct / total : 0;
+
+                            <tr class="@(rank <= 3 ? "bg-light-success-custom" : "")">
+                                <td class="ps-4 text-center fw-bold fs-5">
+                                    @if (rank == 1)
+                                    {
+                                        <span title="Hạng 1" style="font-size: 1.5rem;">🥇</span>
+                                    }
+                                    else if (rank == 2)
+                                    {
+                                        <span title="Hạng 2" style="font-size: 1.5rem;">🥈</span>
+                                    }
+                                    else if (rank == 3)
+                                    {
+                                        <span title="Hạng 3" style="font-size: 1.5rem;">🥉</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-secondary fs-6">@rank</span>
+                                    }
+                                </td>
+                                <td class="fw-bold text-success" style="font-size: 1.05rem;">@fullName</td>
+                                <td class="text-secondary fw-semibold">@studentId</td>
+                                <td class="text-secondary fw-semibold">@className</td>
+                                <td class="text-center">
+                                    <span class="badge bg-white text-dark border border-2 border-success fs-6 px-3 py-2 rounded-pill shadow-sm">
+                                        @correct / @total
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    @if (percent >= 0.9)
+                                    {
+                                        <span class="badge bg-success rounded-pill px-3 py-2">Xuất sắc</span>
+                                    }
+                                    else if (percent >= 0.7)
+                                    {
+                                        <span class="badge bg-primary rounded-pill px-3 py-2">Khá Giỏi</span>
+                                    }
+                                    else if (percent >= 0.5)
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Trung bình</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3 py-2">Cần cố gắng</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4 text-muted small fw-medium">
+                                    @attemptDate.ToString("HH:mm - dd/MM/yyyy")
+                                </td>
+                            </tr>
+                            rank++;
+                        }
+                    }
+                </tbody>
+            </table>
+            
+        </div> @* Hết table-responsive *@
+
+        @* --- THANH PHÂN TRANG (PAGINATION UI) --- *@
+        @if (historyList != null && totalPages > 1)
+        {
+            <div class="card-footer bg-white border-top py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        Hiển thị <b>@(((currentPage - 1) * pageSize) + 1)</b> 
+                        đến <b>@(Math.Min(currentPage * pageSize, historyList.Count))</b> 
+                        trong tổng số <b>@historyList.Count</b> bản ghi
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                                <button class="page-link shadow-none" @onclick="() => ChangePage(currentPage - 1)">
+                                    <i class="bi bi-chevron-left"></i>
+                                </button>
+                            </li>
+
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                var pageNumber = i;
+                                <li class="page-item @(currentPage == pageNumber ? "active" : "")">
+                                    <button class="page-link shadow-none @(currentPage == pageNumber ? "bg-success border-success" : "")" 
+                                            @onclick="() => ChangePage(pageNumber)">@pageNumber</button>
+                                </li>
+                            }
+
+                            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                                <button class="page-link shadow-none" @onclick="() => ChangePage(currentPage + 1)">
+                                    <i class="bi bi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        }
+    </div> @* Hết card *@
+        </div>
+   
+
+<style>
+    /* Nền xanh lá nhạt để làm nổi bật Top 3 người xuất sắc nhất */
+    .bg-light-success-custom {
+        background-color: #f0fdf4 !important;
+    }
+</style>
+
+@code {
+    // Lưu trữ dữ liệu gốc từ API
+    private List<JsonElement>? allHistoryList;
+    
+    // Dữ liệu hiển thị lên bảng (sau khi đã lọc)
+    private List<JsonElement>? historyList;
+    
+    // Danh sách các lớp tự động trích xuất
+    private List<string> availableClasses = new();
+
+    private bool isLoading = true;
+
+    // Các biến trạng thái của bộ lọc
+    private string selectedClass = "";
+    private DateTime? selectedDate = null;
+    
+    // Kiểm tra xem người dùng có đang dùng bộ lọc nào không để bật/tắt nút "Xóa lọc"
+    private bool IsFiltered => !string.IsNullOrEmpty(selectedClass) || selectedDate.HasValue;
+    private int currentPage = 1;
+    private int pageSize = 5; // Số bản ghi mỗi trang
+    private int totalPages => (int)Math.Ceiling((double)(historyList?.Count ?? 0) / pageSize);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        try
+        {
+            // Lấy toàn bộ dữ liệu gốc
+            allHistoryList = await QuizService.GetSessionHistoryAsync(0);
+
+            if (allHistoryList != null)
+            {
+                // TỰ ĐỘNG LẤY DANH SÁCH LỚP: Tìm tất cả className, loại bỏ trùng lặp và sắp xếp A-Z
+                availableClasses = allHistoryList
+                    .Select(x => x.GetProperty("className").GetString() ?? "N/A")
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList();
+            }
+
+            // Gọi hàm lọc để hiển thị (lần đầu sẽ là hiển thị tất cả)
+            ApplyFilter();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Lỗi khi tải lịch sử: {ex.Message}");
+            allHistoryList = new List<JsonElement>();
+            historyList = new List<JsonElement>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // Hàm áp dụng các bộ lọc đang chọn
+    private void ApplyFilter()
+    {
+        if (allHistoryList == null) return;
+        var query = allHistoryList.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(selectedClass))
+            query = query.Where(x => (x.GetProperty("className").GetString() ?? "N/A") == selectedClass);
+
+        if (selectedDate.HasValue)
+            query = query.Where(x => x.GetProperty("attemptDate").GetDateTime().Date == selectedDate.Value.Date);
+
+        historyList = query.ToList();
+        currentPage = 1; // Reset về trang 1 khi lọc dữ liệu
+    }
+
+    // Hàm Xóa tất cả bộ lọc
+    private void ClearFilters()
+    {
+        selectedClass = "";
+        selectedDate = null;
+        ApplyFilter();
+    }
+
+    private List<JsonElement> PagedHistory => historyList?
+        .Skip((currentPage - 1) * pageSize)
+        .Take(pageSize)
+        .ToList() ?? new List<JsonElement>();
+
+    private void ChangePage(int newPage)
+    {
+        if (newPage >= 1 && newPage <= totalPages)
+        {
+            currentPage = newPage;
+            StateHasChanged();
+        }
+    }
+
+
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/admin/quizzes");
+    }
+}

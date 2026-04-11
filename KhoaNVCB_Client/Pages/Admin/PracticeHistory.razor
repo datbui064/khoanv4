@@ -27,6 +27,39 @@
         </div>
     </div>
 
+    @* --- THANH BỘ LỌC (FILTER BAR) --- *@
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-end">
+                @* 1. Lọc theo Lớp *@
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-people me-1"></i> Lọc theo Lớp:</label>
+                    <select class="form-select fw-semibold text-navy-blue" @bind="selectedClass" @bind:after="ApplyFilter">
+                        <option value="">-- Tất cả các lớp --</option>
+                        @foreach (var cls in availableClasses)
+                        {
+                            <option value="@cls">@cls</option>
+                        }
+                    </select>
+                </div>
+
+                @* 2. Lọc theo Ngày nộp bài *@
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted mb-1"><i class="bi bi-calendar-date me-1"></i> Lọc theo Ngày nộp:</label>
+                    <input type="date" class="form-control fw-semibold text-navy-blue" @bind="selectedDate" @bind:after="ApplyFilter" />
+                </div>
+
+                @* 3. Nút xóa bộ lọc *@
+                <div class="col-md-2">
+                    <button class="btn btn-light border w-100 text-danger fw-bold" @onclick="ClearFilters" disabled="@(!IsFiltered)">
+                        <i class="bi bi-x-circle me-1"></i> Xóa lọc
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* --- KẾT THÚC THANH BỘ LỌC --- *@
+
     <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
         <div class="card-body p-0 table-responsive">
             <table class="table table-hover align-middle mb-0">
@@ -142,8 +175,23 @@
 </style>
 
 @code {
+    // Lưu trữ dữ liệu gốc từ API
+    private List<JsonElement>? allHistoryList;
+    
+    // Dữ liệu hiển thị lên bảng (sau khi đã lọc)
     private List<JsonElement>? historyList;
+    
+    // Danh sách các lớp tự động trích xuất
+    private List<string> availableClasses = new();
+
     private bool isLoading = true;
+
+    // Các biến trạng thái của bộ lọc
+    private string selectedClass = "";
+    private DateTime? selectedDate = null;
+    
+    // Kiểm tra xem người dùng có đang dùng bộ lọc nào không để bật/tắt nút "Xóa lọc"
+    private bool IsFiltered => !string.IsNullOrEmpty(selectedClass) || selectedDate.HasValue;
 
     protected override async Task OnInitializedAsync()
     {
@@ -153,16 +201,29 @@
     private async Task LoadData()
     {
         isLoading = true;
-        StateHasChanged(); // Ép giao diện cập nhật để hiện vòng xoay tải dữ liệu
-
+        StateHasChanged();
         try
         {
-            // TRUYỀN SỐ 0 ĐỂ API LẤY CÁC BÀI CÓ SESSIONID = NULL (BÀI TỰ ÔN TẬP)
-            historyList = await QuizService.GetSessionHistoryAsync(0);
+            // Lấy toàn bộ dữ liệu gốc
+            allHistoryList = await QuizService.GetSessionHistoryAsync(0);
+
+            if (allHistoryList != null)
+            {
+                // TỰ ĐỘNG LẤY DANH SÁCH LỚP: Tìm tất cả className, loại bỏ trùng lặp và sắp xếp A-Z
+                availableClasses = allHistoryList
+                    .Select(x => x.GetProperty("className").GetString() ?? "N/A")
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList();
+            }
+
+            // Gọi hàm lọc để hiển thị (lần đầu sẽ là hiển thị tất cả)
+            ApplyFilter();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Lỗi khi tải lịch sử: {ex.Message}");
+            allHistoryList = new List<JsonElement>();
             historyList = new List<JsonElement>();
         }
         finally
@@ -171,9 +232,40 @@
         }
     }
 
+    // Hàm áp dụng các bộ lọc đang chọn
+    private void ApplyFilter()
+    {
+        if (allHistoryList == null) return;
+
+        var query = allHistoryList.AsEnumerable();
+
+        // 1. Lọc theo lớp
+        if (!string.IsNullOrEmpty(selectedClass))
+        {
+            query = query.Where(x => (x.GetProperty("className").GetString() ?? "N/A") == selectedClass);
+        }
+
+        // 2. Lọc theo ngày
+        if (selectedDate.HasValue)
+        {
+            // Chỉ so sánh phần Ngày (Date), bỏ qua phần Giờ (Time)
+            query = query.Where(x => x.GetProperty("attemptDate").GetDateTime().Date == selectedDate.Value.Date);
+        }
+
+        // Gán lại cho danh sách hiển thị
+        historyList = query.ToList();
+    }
+
+    // Hàm Xóa tất cả bộ lọc
+    private void ClearFilters()
+    {
+        selectedClass = "";
+        selectedDate = null;
+        ApplyFilter();
+    }
+
     private void GoBack()
     {
-        // Quay lại trang Dashboard quản lý của Admin
         Navigation.NavigateTo("/admin/quizzes");
     }
 }

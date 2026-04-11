@@ -138,6 +138,75 @@
                     
                 </div>
 
+            
+
+                @* --- THÊM MỚI: PHẦN CHI TIẾT BÀI LÀM --- *@
+                <div class="mt-5 text-start">
+                    <h4 class="fw-bold mb-4 border-bottom pb-3 text-navy-blue">
+                        <i class="bi bi-card-checklist me-2"></i>Chi Tiết Bài Làm
+                    </h4>
+                    
+                    @for (int i = 0; i < questions.Count; i++)
+                    {
+                        var q = questions[i];
+                        var qId = q.GetProperty("questionId").GetInt32();
+                        var correctAns = q.GetProperty("correctAnswer").GetString();
+                        
+                        // Lấy đáp án người dùng chọn (sẽ là null nếu người dùng bỏ qua không chọn)
+                        userAnswers.TryGetValue(qId, out var userAns);
+
+                        <div class="card mb-4 border-0 shadow-sm rounded-4 bg-light">
+                            <div class="card-body p-4">
+                                <h5 class="fw-bold mb-4 lh-base">
+                                    <span class="badge bg-dark me-2">Câu @(i + 1)</span>
+                                    @q.GetProperty("content").GetString()
+                                </h5>
+
+                                <div class="d-flex flex-column gap-2">
+                                    @foreach (var opt in new[] { "A", "B", "C", "D" })
+                                    {
+                                        var optText = q.GetProperty($"option{opt}").GetString();
+                                        
+                                        var isCorrect = (opt == correctAns);
+                                        var isUserChoice = (opt == userAns);
+
+                                        // Thiết lập màu sắc mặc định
+                                        string bgClass = "bg-white text-dark border-secondary-subtle";
+                                        string icon = "";
+
+                                        // Nếu đây là đáp án đúng -> Bôi xanh lá
+                                        if (isCorrect)
+                                        {
+                                            bgClass = "bg-success-subtle text-success border-success fw-bold";
+                                            icon = "<i class='bi bi-check-circle-fill float-end fs-5'></i>";
+                                        }
+                                        // Nếu đây là đáp án người dùng chọn sai -> Bôi đỏ
+                                        else if (isUserChoice && !isCorrect)
+                                        {
+                                            bgClass = "bg-danger-subtle text-danger border-danger fw-bold";
+                                            icon = "<i class='bi bi-x-circle-fill float-end fs-5'></i>";
+                                        }
+
+                                        <div class="p-3 rounded-3 border @bgClass">
+                                            <span class="fw-bold me-2">@opt:</span> @optText
+                                            @((MarkupString)icon)
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @* Thông báo nếu bỏ trống *@
+                                @if (string.IsNullOrEmpty(userAns))
+                                {
+                                    <div class="mt-3 text-warning fw-bold small">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i> Bạn đã bỏ qua câu hỏi này.
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                @* --- KẾT THÚC PHẦN CHI TIẾT --- *@
+
                 <div class="mt-4 d-flex gap-2 justify-content-center">
                     <button class="btn btn-primary btn-lg px-4 rounded-pill" @onclick="Restart">
                         Luyện tập lại
@@ -146,6 +215,7 @@
                         Về trang chủ
                     </a>
                 </div>
+
             </div>
         </div>
     }

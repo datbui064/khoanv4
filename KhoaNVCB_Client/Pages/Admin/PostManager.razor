@@ -41,7 +41,7 @@
         <li class="nav-item">
             <a class="nav-link @(activeTab == "Published" ? "active text-danger" : "text-secondary")"
                @onclick='() => SwitchTab("Published")' style="cursor:pointer">
-                    BÀI ĐÃ ĐĂNG (@(filteredPosts?.Count ?? 0))
+                    BÀI ĐÃ ĐĂNG (@totalPostsCount)
             </a>
         </li>
     </ul>
@@ -97,25 +97,29 @@
                     <tbody>
                         @if (isLoading)
                         {
-                            @* Giữ nguyên skeleton *@
+                            <tr><td colspan="5" class="text-center py-5"><div class="spinner-border text-danger"></div></td></tr>
+                        }
+                        else if (!pagedPosts.Any())
+                        {
+                            <tr><td colspan="5" class="text-center py-5 text-muted">Không có bài viết nào.</td></tr>
                         }
                         else
                         {
-                            @* Dùng Virtualize thay cho foreach *@
-                            <Virtualize Items="filteredPosts" Context="post" OverscanCount="5">
+                            @foreach (var post in pagedPosts)
+                            {
                                 <tr class="animate-fade-in">
                                     <td class="ps-3">
                                         <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "/Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
-                                        class="rounded shadow-sm"
-                                        style="width: 70px; height: 45px; object-fit: cover;"
-                                        onerror="this.src='/images/no-image-available.png';" />
+                                             class="rounded shadow-sm"
+                                             style="width: 70px; height: 45px; object-fit: cover;"
+                                             onerror="this.src='/Images/Logo_hoc_vien_ANND.png';" />
                                     </td>
                                     <td>
                                         <div class="fw-bold text-navy text-truncate" style="max-width: 400px;">@post.Title</div>
                                         <div class="small text-muted text-truncate" style="max-width: 400px;">@post.Summary</div>
                                     </td>
                                     <td><span class="badge bg-gold-soft text-gold">@post.CategoryName</span></td>
-                                    <td class="small text-muted">@*@post.CreatedDate?.ToString("dd/MM/yyyy HH:mm")*@</td>
+                                    <td class="small text-muted">@post.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
                                     <td class="text-end pe-3">
                                         <div class="btn-group">
                                             <button class="btn btn-sm btn-outline-primary" @onclick="() => EditPost(post.PostId)">
@@ -127,11 +131,31 @@
                                         </div>
                                     </td>
                                 </tr>
-                            </Virtualize>
+                            }
                         }
                     </tbody>
                 </table>
             </div>
+
+            @* --- NÚT TẢI THÊM --- *@
+            @if (currentPage < totalPages)
+            {
+                <div class="card-footer bg-white text-center py-4 border-top-0">
+                    <button class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm"
+                            @onclick="LoadMore" disabled="@isLoadingMore">
+                        @if (isLoadingMore)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>ĐANG TẢI...</span>
+                        }
+                        else
+                        {
+                            <span>TẢI THÊM BÀI VIẾT</span>
+                            <i class="bi bi-chevron-down ms-2"></i>
+                        }
+                    </button>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -265,7 +289,7 @@
     animation: slideUp 0.4s ease forwards;
     }
 
-    @@eyframes slideUp {
+    @@keyframes slideUp {
     from
 
     {
@@ -400,48 +424,66 @@
 
 
 @code {
-
     private string activeTab = "Published";
-    private List<PostListItemDto> allSourcePosts = new(); // Khởi tạo list rỗng để tránh null check liên tục
-
-    // Dữ liệu gốc từ API
-    private List<PostListItemDto> filteredPosts = new();  // Dữ liệu sau khi lọc/sắp xếp
-    private List<CategoryDto> categories = new();      // Danh sách chuyên mục để lọc
+    
+    // Đã thay allSourcePosts và filteredPosts bằng các biến phân trang này:
+    private List<PostListItemDto> pagedPosts = new();
+    private List<CategoryDto> categories = new();
     private bool isLoading = true;
-
+    private bool isLoadingMore = false; // Biến mới cho nút tải thêm
     // Các biến filter
     private string searchTerm = "";
     private string selectedCategory = "";
     private string sortBy = "newest";
+
+    // Phân trang & Đếm tổng
+    private int currentPage = 1;
+    private int pageSize = 5;
+    private int totalPages = 1;
+    private int totalPostsCount = 0; // Hiển thị số lượng trên Tab
+
     protected override async Task OnInitializedAsync()
     {
-        // Gọi dữ liệu ngay tại đây
         var cats = await CategoryService.GetAllAsync();
         if (cats != null)
         {
-            categories = cats;
+            categories = cats; // Tùy bạn có bỏ Tuyên truyền ra không
         }
-
-        // 2. Lấy danh sách bài viết
         await LoadData();
     }
 
-    private async Task LoadData()
+  // 1. Hàm LoadData mới biết phân biệt Tải thêm hay Tải mới
+    private async Task LoadData(bool isLoadMore = false)
     {
-        isLoading = true;
+        if (isLoadMore)
+        {
+            isLoadingMore = true;
+            currentPage++;
+        }
+        else
+        {
+            isLoading = true;
+            currentPage = 1;
+        }
         StateHasChanged();
 
         try
         {
-            // Gọi hàm mới siêu nhẹ
-            var data = await PostService.GetAdminPostsAsync();
+            var result = await PostService.GetAdminPostsPagedAsync(
+                currentPage, pageSize, searchTerm, selectedCategory, sortBy, activeTab);
 
-            if (data != null)
+            if (result != null)
             {
-
-                allSourcePosts = data;
-
-                ApplyFilter();
+                if (isLoadMore)
+                {
+                    pagedPosts.AddRange(result.Items); // Cộng dồn
+                }
+                else
+                {
+                    pagedPosts = result.Items; // Ghi đè
+                }
+                totalPages = result.TotalPages;
+                totalPostsCount = result.TotalCount;
             }
         }
         catch (Exception ex)
@@ -451,48 +493,32 @@
         finally
         {
             isLoading = false;
+            isLoadingMore = false;
             StateHasChanged();
         }
     }
-    private void ApplyFilter()
+
+    // 2. Hàm cho nút Tải thêm
+    private async Task LoadMore()
     {
-        // 1. Lọc theo Tab (Trạng thái)
-        var query = allSourcePosts.AsEnumerable();
-        query = query.Where(p => p.Status == activeTab);
-
-        // 2. Lọc theo từ khóa tìm kiếm
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            query = query.Where(p => p.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                                 || (p.Summary != null && p.Summary.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)));
-        }
-
-        // 3. Lọc theo chuyên mục
-        if (!string.IsNullOrWhiteSpace(selectedCategory))
-        {
-            query = query.Where(p => p.CategoryName == selectedCategory);
-        }
-
-        // 4. Sắp xếp
-        query = sortBy switch
-        {
-            "oldest" => query.OrderBy(p => p.CreatedDate),
-            "title-az" => query.OrderBy(p => p.Title),
-            _ => query.OrderByDescending(p => p.CreatedDate)
-        };
-
-        filteredPosts = query.ToList();
+        await LoadData(isLoadMore: true);
     }
-    // TỐI ƯU 3: Sử dụng phương thức không đồng bộ thực sự cho Tab
+
+    // 3. Sửa lại các hàm Filter/Tab/Refresh để nó gọi LoadData(false)
+    private async Task ApplyFilter()
+    {
+        await LoadData(isLoadMore: false);
+    }
+
     private async Task SwitchTab(string tabName)
     {
         if (activeTab == tabName) return;
         activeTab = tabName;
-        ApplyFilter();
+        await LoadData(isLoadMore: false);
     }
-    private async Task RefreshData() => await LoadData();
 
-    
+    private async Task RefreshData() => await LoadData(isLoadMore: false);
+
 
     private void EditPost(int id) => Nav.NavigateTo($"/admin/posts/edit/{id}");
 

@@ -5,14 +5,14 @@
 
 @inject PostService PostService
 @inject CategoryService CategoryService
-
+<div @key="id"> 
 <PageTitle>@GetTypeName(type) - @currentCategory?.CategoryName</PageTitle>
 
 <div class="container py-5">
     <div class="row g-5">
         @* CỘT TRÁI: DANH SÁCH BÀI VIẾT *@
         <div class="col-lg-8">
-            <div class="category-header mb-4">
+            <div class="category-header mb-4" @key="id">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-2">
                         <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Trang chủ</a></li>
@@ -38,7 +38,7 @@
             }
             else
             {
-                <div class="list-container">
+                <div class="list-container" @key="@($"{id}-{type}")">
                     @foreach (var post in filteredPosts)
                     {
                         <div class="card mb-3 border-0 shadow-sm post-list-card overflow-hidden">
@@ -78,9 +78,10 @@
                     <div class="category-stack d-flex flex-column gap-2">
                         @if (categories != null)
                         {
-                            @foreach (var cat in categories.Where(c => c.ParentId == null))
+                            @foreach (var cat in categories.Where(c => c.ParentId == null && c.CategoryName != "Tuyên Truyền" && c.CategoryName != "Video"))
                             {
-                                <a href="/category/@cat.CategoryId/@type" class="category-link @(cat.CategoryId == id ? "active" : "")">
+                                <a href="/category/@cat.CategoryId/@(string.IsNullOrEmpty(type) ? "articles" : type)"
+                                   class="category-link @(cat.CategoryId == id ? "active" : "")">
                                     <span class="small fw-bold">@cat.CategoryName</span>
                                     <i class="oi oi-chevron-right small"></i>
                                 </a>
@@ -92,7 +93,7 @@
         </div>
     </div>
 </div>
-
+</div>
 <style>
     .post-list-card:hover {
         transform: translateY(-3px);
@@ -153,7 +154,7 @@
     {
         "articles" => "Tin tức",
         "videos" => "Video",
-        "laws" => "Quy định pháp luật",
+        "laws" => "Quy định pháp luật", // Nên để chữ thường 'laws' cho đồng bộ
         "documents" => "Văn bản liên quan",
         _ => "Nội dung"
     };
@@ -161,11 +162,52 @@
     protected override async Task OnParametersSetAsync()
     {
         isLoading = true;
-        if (categories == null) categories = await CategoryService.GetAllAsync();
+        filteredPosts = null;
+        StateHasChanged();
+
+        // 1. Đảm bảo có danh sách categories
+        if (categories == null)
+        {
+            categories = await CategoryService.GetAllAsync();
+        }
+
         currentCategory = categories?.FirstOrDefault(c => c.CategoryId == id);
 
-        var result = await PostService.GetPagedPostsAsync(page: 1, pageSize: 20, categoryId: id, sourceType: type);
-        filteredPosts = result.Posts;
+        if (currentCategory != null)
+        {
+            // 2. Gọi API lấy bài viết (Tăng pageSize lên lớn để lấy hết hoặc lấy tương đối)
+            // Chúng ta vẫn truyền categoryName=null để API trả về TẤT CẢ bài viết của type đó
+            var result = await PostService.GetPublicPostsPagedAsync(
+                page: 1,
+                pageSize: 1000, // Lấy số lượng lớn để đủ sức lọc trên Client
+                searchTerm: null,
+                categoryName: null, // BỎ QUA lọc ở Server vì Server đang bị lỗi
+                sourceType: type,
+                sortBy: "date_desc"
+            );
+
+            if (result?.Items != null)
+            {
+                // 3. THỰC HIỆN LỌC TRÊN CLIENT (Sửa tại đây)
+                filteredPosts = result.Items
+                    .Where(x => x.CategoryName.Trim() == currentCategory.CategoryName.Trim())
+                    .Select(x => new PostDto
+                        {
+                            PostId = x.PostId,
+                            Title = x.Title,
+                            Summary = x.Summary,
+                            ImageUrl = x.ImageUrl,
+                            SourceType = x.SourceType,
+                            CreatedDate = x.CreatedDate
+                        }).ToList();
+            }
+        }
+
         isLoading = false;
+        StateHasChanged();
     }
+
+     
+    
+
 }

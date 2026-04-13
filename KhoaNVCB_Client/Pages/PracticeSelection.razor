@@ -222,8 +222,9 @@
             if (categories != null)
             {
                 categories = categories
-                    .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+        .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase)
+                 && !c.CategoryName.Equals("Video", StringComparison.OrdinalIgnoreCase))
+        .ToList();
             }
         }
         catch { /* Xử lý lỗi nếu cần */ }

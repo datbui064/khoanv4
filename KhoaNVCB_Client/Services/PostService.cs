@@ -182,7 +182,13 @@ namespace KhoaNVCB_Client.Services
         }
 
         public async Task<PagedResultDto<PostListItemDto>?> GetPublicPostsPagedAsync(
-    int page, int pageSize, string? searchTerm, string? categoryName, string sortBy)
+   
+            int page = 1,
+            int pageSize = 10,
+            string? searchTerm = null,
+            string? categoryName = null,
+            string sortBy = "newest",
+            string? sourceType = null)
         {
             try
             {
@@ -191,6 +197,7 @@ namespace KhoaNVCB_Client.Services
 
                 if (!string.IsNullOrWhiteSpace(searchTerm)) url += $"&searchTerm={Uri.EscapeDataString(searchTerm)}";
                 if (!string.IsNullOrWhiteSpace(categoryName)) url += $"&categoryName={Uri.EscapeDataString(categoryName)}";
+                if (!string.IsNullOrWhiteSpace(sourceType)) url += $"&sourceType={Uri.EscapeDataString(sourceType)}";
                 url += $"&sortBy={sortBy}";
 
                 // Bắn request không cần token

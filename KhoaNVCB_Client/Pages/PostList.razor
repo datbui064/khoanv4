@@ -195,7 +195,8 @@
         var cats = await CategoryService.GetAllAsync();
         if (cats != null)
         {
-            categories = cats;
+            // Chỉ lấy những chuyên mục KHÁC "Tuyên truyền"
+            categories = cats.Where(c => c.CategoryName != "Tuyên Truyền").ToList();
         }
         await LoadData(isLoadMore: false);
     }
@@ -206,33 +207,47 @@
         if (isLoadMore)
         {
             isLoadingMore = true;
-            currentPage++; // Tăng trang lên 1
+            currentPage++;
         }
         else
         {
             isLoading = true;
-            currentPage = 1; // Reset về trang đầu
+            currentPage = 1;
         }
         StateHasChanged();
 
         try
         {
+            // Vẫn gọi API (Server hiện đang trả về tất cả)
             var result = await PostService.GetPublicPostsPagedAsync(
-    currentPage, pageSize, searchTerm, selectedCategory, sortBy);
+                currentPage, pageSize, searchTerm, selectedCategory, sortBy);
 
             if (result != null)
             {
+                // --- LOGIC LỌC TẠI CLIENT BẮT ĐẦU TẠI ĐÂY ---
+                var query = result.Items.AsEnumerable();
+
+                // 1. Luôn loại bỏ "Tuyên truyền"
+                query = query.Where(p => p.CategoryName != "Tuyên Truyền");
+
+                // 2. NẾU người dùng có chọn Chuyên mục cụ thể -> Phải lọc tiếp
+                if (!string.IsNullOrWhiteSpace(selectedCategory))
+                {
+                    query = query.Where(p => p.CategoryName.Trim() == selectedCategory.Trim());
+                }
+
+                var filteredItems = query.ToList();
+                // --- KẾT THÚC LOGIC LỌC ---
+
                 if (isLoadMore)
                 {
-                    // NẾU TẢI THÊM: Cộng dồn dữ liệu mới vào cuối danh sách hiện tại
-                    pagedPosts.AddRange(result.Items);
+                    pagedPosts.AddRange(filteredItems);
                 }
                 else
                 {
-                    // NẾU TÌM KIẾM/ĐỔI TAB: Thay thế hoàn toàn danh sách cũ
-                    pagedPosts = result.Items;
+                    pagedPosts = filteredItems;
                 }
-                
+
                 totalPages = result.TotalPages;
                 totalPostsCount = result.TotalCount;
             }

@@ -15,7 +15,8 @@ namespace KhoaNVCB_Client.Services
         // Lấy danh sách danh mục (Công khai)
         public async Task<List<CategoryDto>> GetAllAsync()
         {
-            return await _http.GetFromJsonAsync<List<CategoryDto>>("api/Categories") ?? new();
+            
+            return await _http.GetFromJsonAsync<List<CategoryDto>>($"api/Categories?t={DateTime.Now.Ticks}") ?? new();
         }
 
         // Thêm mới danh mục 

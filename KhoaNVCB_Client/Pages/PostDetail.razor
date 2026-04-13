@@ -44,16 +44,16 @@
                     <div class="mb-4">
                         @if (post.SourceType == "Video")
                         {
-                            <div class="ratio ratio-16x9 rounded-3 overflow-hidden shadow-sm">
-                                <iframe src="@GetEmbedUrl(post.OriginalUrl)"
-                                        title="YouTube video player"
-                                        frameborder="0"
+                            @* <div class="ratio ratio-16x9 rounded-3 overflow-hidden shadow-sm"> *@
+                            @*     <iframe src="@GetEmbedUrl(post.OriginalUrl)" *@
+                            @*             title="YouTube video player" *@
+                            @*             frameborder="0" *@
                                       
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                        allowfullscreen
-                                        loading="lazy">
-                                </iframe>
-                            </div>
+                            @*             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" *@
+                            @*             allowfullscreen *@
+                            @*             loading="lazy"> *@
+                            @*     </iframe> *@
+                            @* </div> *@
                         }
                         else
                         {

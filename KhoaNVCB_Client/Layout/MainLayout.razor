@@ -313,8 +313,9 @@
             var allCategories = await CategoryService.GetAllAsync();
             // Lọc bỏ category có tên "Tuyên Truyền" (không phân biệt hoa thường)
             categories = allCategories?
-                .Where(c => !c.CategoryName.Equals("Tuyên Truyền", StringComparison.OrdinalIgnoreCase))
-                .ToList();
+               .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase)
+                 && !c.CategoryName.Equals("Video", StringComparison.OrdinalIgnoreCase))
+        .ToList();
         }
         catch { categories = new List<CategoryDto>(); }
             chatMessages.Add(new CustomChatMessage { IsUser = false, HtmlContent = "Xin chào! Tôi là trợ lý ảo của Khoa AN NINH CHÍNH TRỊ NỘI BỘ. Bạn cần hỗ trợ thông tin gì không?" });

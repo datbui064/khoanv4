@@ -195,33 +195,39 @@ else
 
         try
         {
-            // 1. Upload file gốc để lưu link (Cho người dùng tải về sau này)
+            // 1. Upload file gốc lên server
             var fileUrl = await PhotoUploadService.UploadPhotoAsync(e.File);
-            if (!string.IsNullOrEmpty(fileUrl))
-            {
-                post.OriginalUrl = fileUrl;
-            }
+            if (string.IsNullOrEmpty(fileUrl)) return;
 
-            // 2. Trích xuất text (Hỗ trợ .docx và .pdf dựa trên API của bạn)
+            post.OriginalUrl = fileUrl;
+
+            // 2. Kiểm tra dung lượng hoặc loại file
+            // Nếu file > 2MB hoặc là PDF, ưu tiên dùng Iframe để hiển thị thay vì trích xuất nội dung vào Editor
             var ext = Path.GetExtension(e.File.Name).ToLower();
-            if (ext == ".docx" || ext == ".pdf")
+            if (e.File.Size > 2 * 1024 * 1024 || ext == ".pdf")
             {
+                // Tạo mã nhúng PDF thay vì trích xuất text
+                post.Content = $@"<p>Nội dung tài liệu chi tiết:</p>
+                             <iframe src='{fileUrl}' width='100%' height='600px' style='border:none;'></iframe>
+                             <p>Tải về: <a href='{fileUrl}' target='_blank'>Click vào đây</a></p>";
+
+                await JS.InvokeVoidAsync("setTinyMCEContent", post.Content);
+                errorMessage = "File lớn đã được chuyển sang chế độ nhúng (Iframe).";
+            }
+            else if (ext == ".docx")
+            {
+                // Chỉ trích xuất với file Word nhẹ
                 isParsingWord = true;
                 StateHasChanged();
-
                 var extractedHtml = await PostService.ExtractWordAsync(e.File);
                 if (!string.IsNullOrEmpty(extractedHtml))
                 {
                     post.Content = extractedHtml;
-                    // Đẩy nội dung vào TinyMCE ngay lập tức
                     await JS.InvokeVoidAsync("setTinyMCEContent", post.Content);
                 }
             }
         }
-        catch (Exception ex)
-        {
-            errorMessage = "Lỗi xử lý tệp: " + ex.Message;
-        }
+        catch (Exception ex) { errorMessage = "Lỗi: " + ex.Message; }
         finally
         {
             isUploadingFile = false;
@@ -246,6 +252,15 @@ else
     {
         errorMessage = null;
         isSubmitting = true;
+        if (!string.IsNullOrEmpty(post.OriginalUrl))
+        {
+            post.Content = $@"<div class='pdf-container' style='height:800px;'>
+            <iframe src='https://docs.google.com/viewer?url={post.OriginalUrl}&embedded=true'
+                    width='100%' height='100%' frameborder='0'></iframe>
+        </div>
+        <p>Tải file gốc tại đây: <a href='{post.OriginalUrl}'>Click để tải</a></p>";
+        }
+
 
         try
         {

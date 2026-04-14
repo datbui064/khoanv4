@@ -28,15 +28,15 @@
                     <div class="nav-grid">
                         <div class="nav-item" @onclick='() => Nav.NavigateTo("/documents/2000-2018")'>
                             <span class="year">2000 - 2018</span>
-                            <span class="desc">Giai đoạn tiền đề</span>
+
                         </div>
                         <div class="nav-item" @onclick='() => Nav.NavigateTo("/documents/2018-2025")'>
                             <span class="year">2018 - 2025</span>
-                            <span class="desc">Giai đoạn đổi mới</span>
+
                         </div>
                         <div class="nav-item active" @onclick='() => Nav.NavigateTo("/documents/2025-now")'>
                             <span class="year">2025 - NAY</span>
-                            <span class="desc">Quy định hiện hành</span>
+
                         </div>
                     </div>
                 </div>
@@ -76,7 +76,7 @@
 
         </div>
 
-      
+
 
         @* --- THANH LỌC (Gọn gàng như Admin) --- *@
         <div class="filter-bar bg-white p-3 mb-4 rounded-3 shadow-sm border">
@@ -85,7 +85,7 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
                         <input type="text" class="form-control border-start-0" placeholder="Tìm tiêu đề..."
-                               @bind="searchTerm" @bind:event="oninput" @onkeyup="ApplyFilter" />
+                        @bind="searchTerm" @bind:event="oninput" @onkeyup="ApplyFilter" />
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -95,6 +95,7 @@
                         {
                             @foreach (var cat in categories)
                             {
+                                // Value ở đây phải là CategoryName để khớp với biến selectedCategory (string)
                                 <option value="@cat.CategoryName">@cat.CategoryName</option>
                             }
                         }
@@ -137,8 +138,8 @@
                                 <tr @onclick='() => Nav.NavigateTo($"/post/{post.PostId}")' style="cursor: pointer;">
                                     <td class="ps-3">
                                         <img src="@(string.IsNullOrEmpty(post.ImageUrl) ? "/Images/Logo_hoc_vien_ANND.png" : post.ImageUrl)"
-                                             class="rounded border"
-                                             style="width: 60px; height: 40px; object-fit: cover;" />
+                                        class="rounded border"
+                                        style="width: 60px; height: 40px; object-fit: cover;" />
                                     </td>
                                     <td>
                                         <div class="fw-bold text-navy-blue text-truncate mb-0" style="max-width: 500px; font-size: 0.95rem;">@post.Title</div>
@@ -158,9 +159,9 @@
             {
                 <div class="card-footer bg-white text-center py-4 border-top-0">
                     <button class="btn btn-outline-primary fw-bold px-4 rounded-pill shadow-sm"
-                            style="transition: all 0.3s;"
-                            @onclick="LoadMore" disabled="@isLoadingMore">
-                        
+                    style="transition: all 0.3s;"
+                    @onclick="LoadMore" disabled="@isLoadingMore">
+
                         @if (isLoadingMore)
                         {
                             <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -180,404 +181,388 @@
 <style>
     /* Bố cục Grid cho khu vực thực tiễn */
     .practical-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        height: calc(100% - 30px); /* Trừ đi phần label */
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    height: calc(100% - 30px); /* Trừ đi phần label */
     }
 
     /* Thẻ card chung */
     .practical-card {
-        display: flex;
-        align-items: center;
-        padding: 16px;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(0,0,0,0.05);
-        position: relative;
-        overflow: hidden;
-        background: #fff;
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+    background: #fff;
     }
 
     /* Icon bên trái */
     .practical-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-right: 15px;
-        transition: 0.3s;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-right: 15px;
+    transition: 0.3s;
     }
 
     /* Nội dung text */
     .practical-info {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
     }
 
     .p-title {
-        font-weight: 800;
-        font-size: 0.85rem;
-        letter-spacing: 0.5px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
     }
 
     .p-subtitle {
-        font-size: 0.7rem;
-        opacity: 0.7;
+    font-size: 0.7rem;
+    opacity: 0.7;
     }
 
     .arrow-ms {
-        font-size: 1rem;
-        opacity: 0.3;
-        transition: 0.3s;
+    font-size: 1rem;
+    opacity: 0.3;
+    transition: 0.3s;
     }
 
     /* Màu sắc riêng cho Bài báo */
     .news-style {
-        border-left: 4px solid #2e7d32;
+    border-left: 4px solid #2e7d32;
     }
 
-        .news-style .practical-icon {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
+    .news-style .practical-icon {
+    background: #e8f5e9;
+    color: #2e7d32;
+    }
 
-        .news-style .p-title {
-            color: #1b5e20;
-        }
+    .news-style .p-title {
+    color: #1b5e20;
+    }
 
     /* Màu sắc riêng cho Video */
     .video-style {
-        border-left: 4px solid #c62828;
+    border-left: 4px solid #c62828;
     }
 
-        .video-style .practical-icon {
-            background: #ffebee;
-            color: #c62828;
-        }
+    .video-style .practical-icon {
+    background: #ffebee;
+    color: #c62828;
+    }
 
-        .video-style .p-title {
-            color: #b71c1c;
-        }
+    .video-style .p-title {
+    color: #b71c1c;
+    }
 
     /* Hiệu ứng Hover */
     .practical-card:hover {
-        transform: translateX(8px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transform: translateX(8px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
 
     .news-style:hover {
-        background: #f1f8f5;
+    background: #f1f8f5;
     }
 
     .video-style:hover {
-        background: #fff5f5;
+    background: #fff5f5;
     }
 
     .practical-card:hover .arrow-ms {
-        transform: translateX(3px);
-        opacity: 1;
+    transform: translateX(3px);
+    opacity: 1;
     }
 
     .practical-card:hover .practical-icon {
-        transform: scale(1.1);
+    transform: scale(1.1);
     }
 
     /* Responsive cho mobile */
     @@media (max-width: 992px) {
-        .practical-grid {
-            flex-direction: row;
-        }
+    .practical-grid {
+    flex-direction: row;
+    }
 
-        .practical-card {
-            flex: 1;
-        }
+    .practical-card {
+    flex: 1;
+    }
     }
 </style>
 <style>
     :root {
-        --navy-blue: #1a237e;
-        --primary-soft: #e8eaf6;
-        --success-soft: #e8f5e9;
-        --danger-soft: #ffebee;
+    --navy-blue: #1a237e;
+    --primary-soft: #e8eaf6;
+    --success-soft: #e8f5e9;
+    --danger-soft: #ffebee;
     }
 
     /* Container chung cho nhóm điều hướng */
     .nav-card-group {
-        background: #ffffff;
-        border-radius: 12px;
-        padding: 1.25rem;
-        border: 1px solid #e0e4e8;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid #e0e4e8;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
 
     .group-label {
-        font-size: 0.75rem;
-        font-weight: 800;
-        color: #6c757d;
-        letter-spacing: 1px;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #6c757d;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
     }
 
     /* Grid cho các năm */
     .nav-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
     }
 
     .nav-item {
-        background: #f8f9fa;
-        border: 1px solid #edf2f7;
-        padding: 10px;
-        border-radius: 8px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: #f8f9fa;
+    border: 1px solid #edf2f7;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .nav-item:hover {
-        background: var(--navy-blue);
-        border-color: var(--navy-blue);
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(26, 35, 126, 0.2);
+    background: var(--navy-blue);
+    border-color: var(--navy-blue);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(26, 35, 126, 0.2);
     }
 
     .nav-item .year {
-        display: block;
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: var(--navy-blue);
+    display: block;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--navy-blue);
     }
 
     .nav-item .desc {
-        font-size: 0.7rem;
-        color: #6c757d;
+    font-size: 0.7rem;
+    color: #6c757d;
     }
 
     .nav-item:hover .year, .nav-item:hover .desc {
-        color: #ffffff;
+    color: #ffffff;
     }
 
     .nav-item.active {
-        border-left: 4px solid #dc3545;
-        background: var(--primary-soft);
+    border-left: 4px solid #dc3545;
+    background: var(--primary-soft);
     }
 
     /* Action Cards (Báo chí & Video) */
     .action-card {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 15px;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-align: center;
-        border: 1px solid transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: 1px solid transparent;
     }
 
     .action-card i {
-        font-size: 1.5rem;
+    font-size: 1.5rem;
     }
 
     .action-card span {
-        font-size: 0.85rem;
-        font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 600;
     }
 
     .bg-success-soft { background: #f1f8f5; color: #2e7d32; }
     .bg-danger-soft { background: #fff5f5; color: #c62828; }
 
     .action-card:hover {
-        transform: scale(1.03);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        filter: brightness(0.95);
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    filter: brightness(0.95);
     }
 
     /* Responsive */
     @@media (max-width: 992px) {
-        .nav-grid { grid-template-columns: 1fr; }
+    .nav-grid { grid-template-columns: 1fr; }
     }
     /* ... các style cũ ... */
     .examples-nav {
-        background: #f0f4f8; /* Màu nền hơi xanh nhạt để phân biệt với văn bản quy định */
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px dashed #cfd8dc;
+    background: #f0f4f8; /* Màu nền hơi xanh nhạt để phân biệt với văn bản quy định */
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px dashed #cfd8dc;
     }
 
     .btn-outline-success {
-        font-size: 0.85rem;
-        font-weight: 500;
+    font-size: 0.85rem;
+    font-weight: 500;
     }
 
     .btn-outline-danger {
-        font-size: 0.85rem;
-        font-weight: 500;
+    font-size: 0.85rem;
+    font-weight: 500;
     }
     .btn-outline-navy {
-        color: var(--navy-blue);
-        border-color: var(--navy-blue);
-        background-color: transparent;
-        font-size: 0.85rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
+    color: var(--navy-blue);
+    border-color: var(--navy-blue);
+    background-color: transparent;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
     }
 
-        .btn-outline-navy:hover {
-            background-color: var(--navy-blue);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(26, 35, 126, 0.2);
-        }
+    .btn-outline-navy:hover {
+    background-color: var(--navy-blue);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(26, 35, 126, 0.2);
+    }
 
     .documents-nav {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px dashed #dee2e6;
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px dashed #dee2e6;
     }
 </style>
 <style>
 
     :root {
-        --navy-blue: #1a237e;
-        --gold-bg: #fff9c4;
-        --gold-text: #856404;
+    --navy-blue: #1a237e;
+    --gold-bg: #fff9c4;
+    --gold-text: #856404;
     }
 
     /* Hiệu ứng giống Admin */
     .table tbody tr {
-        transition: all 0.2s;
-        border-bottom: 1px solid #f1f1f1;
+    transition: all 0.2s;
+    border-bottom: 1px solid #f1f1f1;
     }
 
-        .table tbody tr:hover {
-            background-color: rgba(26, 35, 126, 0.05) !important;
-            transform: scale(1.001);
-            box-shadow: inset 3px 0 0 #dc3545;
-        }
+    .table tbody tr:hover {
+    background-color: rgba(26, 35, 126, 0.05) !important;
+    transform: scale(1.001);
+    box-shadow: inset 3px 0 0 #dc3545;
+    }
 
     .bg-gold-soft {
-        background-color: var(--gold-bg);
-        color: var(--gold-text);
-        font-size: 0.7rem;
-        padding: 4px 8px;
+    background-color: var(--gold-bg);
+    color: var(--gold-text);
+    font-size: 0.7rem;
+    padding: 4px 8px;
     }
 
     .text-navy-blue {
-        color: var(--navy-blue);
+    color: var(--navy-blue);
     }
 
     /* Fix text bị tràn */
     .text-truncate {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     }
 
     @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+    from {
+    opacity: 0;
+    transform: translateY(10px);
+    }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    to {
+    opacity: 1;
+    transform: translateY(0);
+    }
     }
 
     .animate-fade-in {
-        animation: fadeIn 0.4s ease-out;
+    animation: fadeIn 0.4s ease-out;
     }
 </style>
 
 @code {
-    private string activeTab = "Published";
-    
     private List<PostListItemDto> pagedPosts = new();
     private List<CategoryDto> categories = new();
-    
-    // Hai trạng thái loading khác biệt
-    private bool isLoading = true;       // Dùng khi load mới toàn trang
-    private bool isLoadingMore = false;  // Dùng khi bấm nút Tải thêm
+
+    private bool isLoading = true;
+    private bool isLoadingMore = false;
 
     private string searchTerm = "";
+    // Dùng duy nhất 1 biến string để khớp với PostListItemDto.CategoryName
     private string selectedCategory = "";
     private string sortBy = "newest";
 
     private int currentPage = 1;
-    private int pageSize = 5; // Cập nhật hiển thị 5 bài/lượt theo ý bạn
+    private int pageSize = 5;
     private int totalPages = 1;
     private int totalPostsCount = 0;
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. Tải danh sách chuyên mục trước
         var cats = await CategoryService.GetAllAsync();
         if (cats != null)
         {
-            // Chỉ lấy những chuyên mục KHÁC "Tuyên truyền"
             categories = cats.Where(c => c.CategoryName != "Tuyên Truyền").ToList();
+
+            // 2. Kiểm tra URL: Nếu là trang video, gán mặc định chuỗi "Video"
+           
         }
+
+        // 3. Gọi nạp dữ liệu bài viết
         await LoadData(isLoadMore: false);
     }
 
-    // Hàm LoadData giờ nhận thêm tham số để phân biệt hành động
     private async Task LoadData(bool isLoadMore = false)
     {
-        if (isLoadMore)
-        {
-            isLoadingMore = true;
-            currentPage++;
-        }
-        else
-        {
-            isLoading = true;
-            currentPage = 1;
-        }
-        StateHasChanged();
+        if (isLoadMore) { isLoadingMore = true; currentPage++; }
+        else { isLoading = true; currentPage = 1; }
 
         try
         {
-            // Vẫn gọi API (Server hiện đang trả về tất cả)
+            // 1. Gửi categoryName lên Server.
+            // Server sẽ trả về đúng danh sách đã lọc theo Category.
             var result = await PostService.GetPublicPostsPagedAsync(
                 currentPage, pageSize, searchTerm, selectedCategory, sortBy);
 
             if (result != null)
             {
-                // --- LOGIC LỌC TẠI CLIENT BẮT ĐẦU TẠI ĐÂY ---
-                var query = result.Items.AsEnumerable();
+                // 2. Lấy thẳng Items từ Server
+                var itemsFromServer = result.Items;
 
-                // 1. Luôn loại bỏ "Tuyên truyền"
-                query = query.Where(p => p.CategoryName != "Tuyên Truyền");
-
-                // 2. NẾU người dùng có chọn Chuyên mục cụ thể -> Phải lọc tiếp
-                if (!string.IsNullOrWhiteSpace(selectedCategory))
-                {
-                    query = query.Where(p => p.CategoryName.Trim() == selectedCategory.Trim());
-                }
-
-                var filteredItems = query.ToList();
-                // --- KẾT THÚC LOGIC LỌC ---
+                // 3. CHỈ lọc những thứ mà API chưa hỗ trợ (Ví dụ: loại bỏ Tuyên truyền)
+                // Dùng ToLower().Contains() để an toàn tuyệt đối
+                var finalItems = itemsFromServer
+                    .Where(p => p.CategoryName == null || !p.CategoryName.ToLower().Contains("tuyên truyền"))
+                    .ToList();
 
                 if (isLoadMore)
-                {
-                    pagedPosts.AddRange(filteredItems);
-                }
+                    pagedPosts.AddRange(finalItems);
                 else
-                {
-                    pagedPosts = filteredItems;
-                }
+                    pagedPosts = finalItems;
 
                 totalPages = result.TotalPages;
                 totalPostsCount = result.TotalCount;
@@ -585,7 +570,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("console.log", ex.Message);
+            await JS.InvokeVoidAsync("console.log", "Lỗi: " + ex.Message);
         }
         finally
         {
@@ -595,36 +580,6 @@
         }
     }
 
-    // Sự kiện bấm nút Tải thêm
-    private async Task LoadMore()
-    {
-        await LoadData(isLoadMore: true);
-    }
-
-    private async Task ApplyFilter()
-    {
-        // Khi gõ tìm kiếm hoặc lọc chuyên mục -> Tải lại từ trang 1
-        await LoadData(isLoadMore: false);
-    }
-
-    private async Task SwitchTab(string tabName)
-    {
-        if (activeTab == tabName) return;
-        activeTab = tabName;
-        await LoadData(isLoadMore: false);
-    }
-
-    private async Task RefreshData() => await LoadData(isLoadMore: false);
-
-    private void EditPost(int id) => Nav.NavigateTo($"/admin/posts/edit/{id}");
-
-    private async Task DeletePost(int id, string title)
-    {
-        bool confirm = await JS.InvokeAsync<bool>("confirm", $"Xóa bài viết: {title}?");
-        if (confirm)
-        {
-            var success = await PostService.DeleteAsync(id);
-            if (success) await LoadData(isLoadMore: false);
-        }
-    }
+    private async Task LoadMore() => await LoadData(isLoadMore: true);
+    private async Task ApplyFilter() => await LoadData(isLoadMore: false);
 }

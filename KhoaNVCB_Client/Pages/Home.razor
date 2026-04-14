@@ -144,97 +144,56 @@
     </section>
 </div>
 
+@* --- SECTION: ĐỘI NGŨ GIẢNG VIÊN & CHUYÊN GIA (COMPACT VERSION) --- *@
 @* --- SECTION: ĐỘI NGŨ GIẢNG VIÊN & CHUYÊN GIA --- *@
-<section class="faculty-section py-5 px-3">
+<section class="mb-5 py-5 bg-light-subtle rounded-4">
+    <div class="section-header-center">
+        <h2 class="section-title text-navy">Đội ngũ giảng viên & Chuyên gia</h2>
+        <div class="section-underline"></div>
+        <p class="text-muted mt-3">Những nhà khoa học, chuyên gia đầu ngành trong lĩnh vực An ninh chính trị nội bộ</p>
+    </div>
+
     <div class="container">
-        <div class="text-center mb-5">
-            <span class="badge rounded-pill bg-gold-light text-gold px-3 py-2 mb-2 fw-bold">NHÂN SỰ NÒNG CỐT</span>
-            <h2 class="section-title mx-auto">Đội ngũ Giảng viên & Chuyên gia</h2>
-            <div class="section-underline mx-auto"></div>
-            <p class="text-muted mt-3">Hội tụ những nhà khoa học tâm huyết, kinh nghiệm thực tiễn và tư duy nghiệp vụ sắc bén</p>
+        <div class="row g-4 justify-content-center">
+            @{
+                var displayList = showAllFaculty ? facultyList : facultyList.Take(4).ToList();
+            }
+            @foreach (var member in displayList)
+            {
+                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                    <div class="faculty-card">
+                        <div class="faculty-avatar-circle">
+                            <img src="@member.ImageUrl" alt="@member.Name" onerror="this.src='/Images/Logo_hoc_vien_ANND.png'" />
+                        </div>
+
+                        <div class="faculty-rank-tag">@member.Position</div>
+
+                        <h5 class="faculty-name">@member.Name</h5>
+                        <p class="faculty-degree">@member.Degree</p>
+
+                        <div class="faculty-meta">
+                            <div class="meta-row">
+                                <i class="oi oi-calendar"></i>
+                                <span>@member.BirthDate</span>
+                            </div>
+                            <div class="meta-row">
+                                <i class="oi oi-map-marker"></i>
+                                <span class="text-truncate">@member.HomeTown</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
-        <div class="row g-4">
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="faculty-card">
-                    <div class="faculty-image">
-                        <img src="/Images/Logo_hoc_vien_ANND.png" alt="Giảng viên" />
-                        <div class="faculty-socials">
-                            <a href="#"><i class="oi oi-envelope-closed"></i></a>
-                            <a href="#"><i class="oi oi-book"></i></a>
-                        </div>
-                    </div>
-                    <div class="faculty-info text-center p-4">
-                        <h5 class="faculty-name">PGS, TS. NGUYỄN VĂN A</h5>
-                        <p class="faculty-rank">Giảng viên Cao cấp - Trưởng Khoa</p>
-                        <hr class="short-hr mx-auto">
-                        <p class="faculty-bio">Chuyên gia đầu ngành với hơn 25 năm kinh nghiệm nghiên cứu lý luận bảo vệ chính trị nội bộ.</p>
-                        <div class="faculty-tags">
-                            <span class="badge bg-light text-navy border">Lý luận</span>
-                            <span class="badge bg-light text-navy border">Nghiệp vụ</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="faculty-card">
-                    <div class="faculty-image">
-                        <img src="/Images/Logo_hoc_vien_ANND.png" alt="Giảng viên" />
-                        <div class="faculty-socials">
-                            <a href="#"><i class="oi oi-envelope-closed"></i></a>
-                            <a href="#"><i class="oi oi-book"></i></a>
-                        </div>
-                    </div>
-                    <div class="faculty-info text-center p-4">
-                        <h5 class="faculty-name">PGS, TS. NGUYỄN VĂN A</h5>
-                        <p class="faculty-rank">Giảng viên Cao cấp - Trưởng Khoa</p>
-                        <hr class="short-hr mx-auto">
-                        <p class="faculty-bio">Chuyên gia đầu ngành với hơn 25 năm kinh nghiệm nghiên cứu lý luận bảo vệ chính trị nội bộ.</p>
-                        <div class="faculty-tags">
-                            <span class="badge bg-light text-navy border">Lý luận</span>
-                            <span class="badge bg-light text-navy border">Nghiệp vụ</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="faculty-card">
-                    <div class="faculty-image">
-                        <img src="/Images/Logo_hoc_vien_ANND.png" alt="Giảng viên" />
-                        <div class="faculty-socials">
-                            <a href="#"><i class="oi oi-envelope-closed"></i></a>
-                            <a href="#"><i class="oi oi-book"></i></a>
-                        </div>
-                    </div>
-                    <div class="faculty-info text-center p-4">
-                        <h5 class="faculty-name">PGS, TS. NGUYỄN VĂN A</h5>
-                        <p class="faculty-rank">Giảng viên Cao cấp - Trưởng Khoa</p>
-                        <hr class="short-hr mx-auto">
-                        <p class="faculty-bio">Chuyên gia đầu ngành với hơn 25 năm kinh nghiệm nghiên cứu lý luận bảo vệ chính trị nội bộ.</p>
-                        <div class="faculty-tags">
-                            <span class="badge bg-light text-navy border">Lý luận</span>
-                            <span class="badge bg-light text-navy border">Nghiệp vụ</span>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-            @* Bạn có thể thêm Giảng viên 2, 3 tương tự *@
-            <div class="col-xl-3 col-lg-4 col-md-6">
-                <div class="faculty-card h-100 d-flex flex-column justify-content-center align-items-center border-dashed p-4">
-                    <div class="add-expert-circle mb-3">
-                        <i class="oi oi-people"></i>
-                    </div>
-                    <h6 class="text-muted fw-bold">Và hơn 20 giảng viên</h6>
-                    <p class="small text-center text-muted">Đang trực tiếp giảng dạy tại Khoa</p>
-                    <a href="#" class="btn btn-sm btn-outline-gold mt-2">Xem danh sách đầy đủ</a>
-                </div>
-            </div>
+        <div class="view-all-container">
+            <a href="/faculty-members" class="btn-view-more">
+                Xem tất cả giảng viên <i class="oi oi-arrow-right ms-2"></i>
+            </a>
         </div>
     </div>
 </section>
+
 
 <style>
     /* COPY TOÀN BỘ CSS GỐC CỦA BẠN VÀO ĐÂY */
@@ -447,14 +406,7 @@
     }
 
     /* Faculty Card */
-    .faculty-card {
-        background: #fff;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 10px 30px rgba(10, 25, 47, 0.05);
-        transition: 0.4s;
-        height: 100%;
-    }
+   
 
     .faculty-image {
         position: relative;
@@ -530,12 +482,422 @@
             opacity: 1;
         }
     }
+
+    /* ============================================================
+           FACULTY CARD - UPDATED: SMALLER, CIRCULAR IMAGE
+           ============================================================ */
+    .faculty-card {
+        background: #fff;
+        border-radius: 15px; /* Bo góc nhẹ hơn cho thẻ nhỏ */
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05); /* Bóng đổ nhẹ hơn */
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 20px; /* Thêm padding tổng thể cho thẻ */
+        text-align: center; /* Căn giữa toàn bộ nội dung text */
+    }
+
+        .faculty-card:hover {
+            transform: translateY(-5px); /* Bay lên ít hơn */
+            box-shadow: 0 10px 30px rgba(10, 25, 47, 0.08);
+            border-color: rgba(197, 160, 89, 0.3); /* Hiện viền vàng nhẹ khi hover */
+        }
+
+    /* Vùng chứa ảnh: Căn giữa và tạo khung tròn */
+    .faculty-image-wrapper {
+        position: relative;
+        width: 120px; /* Kích thước ảnh nhỏ lại */
+        height: 120px; /* Kích thước ảnh nhỏ lại */
+        margin: 0 auto 15px auto; /* Căn giữa container ảnh và tạo margin bottom */
+        overflow: hidden;
+        border-radius: 50%; /* Làm khung tròn */
+        border: 3px solid #f0f0f0; /* Viền xám nhẹ cho ảnh */
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Bóng đổ trong tạo độ sâu */
+        transition: border-color 0.3s ease;
+    }
+
+    .faculty-card:hover .faculty-image-wrapper {
+        border-color: var(--gold-accent); /* Viền ảnh đổi sang màu vàng khi hover thẻ */
+    }
+
+    .faculty-image-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Phủ kín khung tròn */
+        transition: transform 0.5s ease;
+    }
+
+    .faculty-card:hover .faculty-image-wrapper img {
+        transform: scale(1.05); /* Zoom nhẹ ảnh khi hover */
+    }
+
+    /* Badge chức vụ: Chuyển xuống dưới tên, nhỏ gọn hơn */
+    .faculty-rank-badge {
+        display: inline-block; /* Để padding hoạt động theo nội dung */
+        background: rgba(10, 25, 47, 0.05); /* Nền cực nhẹ */
+        color: var(--navy-primary); /* Màu chữ tối */
+        padding: 3px 10px;
+        font-size: 0.7rem; /* Chữ nhỏ */
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-radius: 50px; /* Bo tròn tuyệt đối */
+        margin-bottom: 15px;
+        border: 1px solid rgba(10, 25, 47, 0.1);
+    }
+
+    .faculty-info {
+        padding: 0; /* Bỏ padding cũ */
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .faculty-name {
+        font-size: 1.05rem; /* Tên nhỏ lại một chút */
+        font-weight: 800;
+        margin-bottom: 4px; /* Sát badge hơn */
+        line-height: 1.3;
+    }
+
+    .faculty-degree {
+        color: var(--gold-accent);
+        font-weight: 600;
+        font-size: 0.85rem; /* Nhỏ lại */
+        margin-bottom: 12px;
+        display: block; /* Xuống dòng */
+    }
+
+    /* Danh sách chi tiết: Căn lùi vào giữa, chữ nhỏ gọn */
+    .faculty-details-list {
+        font-size: 0.8rem; /* Chữ nhỏ hơn */
+        text-align: left; /* Text chi tiết vẫn căn trái */
+        width: 90%; /* Thu hẹp chiều rộng vùng chi tiết */
+        margin: 0 auto; /* Căn giữa vùng chi tiết */
+        border-top: 1px solid #eee; /* Đường kẻ ngang phân cách */
+        padding-top: 10px;
+    }
+
+    .detail-item {
+        display: flex;
+        margin-bottom: 4px; /* Sát nhau hơn */
+        line-height: 1.4;
+        align-items: flex-start; /* Căn đỉnh nếu value dài */
+    }
+
+    .detail-label {
+        font-weight: 700;
+        color: var(--navy-primary); /* Dùng màu navy cho label */
+        min-width: 70px; /* Nhỏ lại */
+        opacity: 0.8;
+    }
+
+    .detail-value {
+        color: var(--text-muted);
+        flex: 1; /* Chiếm nốt phần còn lại */
+    }
+
+    /* Cập nhật lại Grid để 4 cột trông đẹp hơn với thẻ nhỏ */
+    @@media (min-width: 1200px) {
+        .col-xl-3 {
+            flex: 0 0 25%;
+            max-width: 25%;
+            padding-left: 10px; /* Giảm gap PC một chút */
+            padding-right: 10px;
+        }
+    }
+    /* Căn giữa tiêu đề section */
+    .section-header-center {
+        text-align: center;
+        margin-bottom: 3rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+        .section-header-center .section-underline {
+            margin: 10px auto 0 auto; /* Đưa gạch chân vào giữa */
+        }
+
+    /* Tinh chỉnh lại thẻ Faculty để nội dung luôn trung tâm */
+    .faculty-card {
+        text-align: center;
+        padding: 25px 15px;
+        display: flex;
+        flex-direction: column;
+        align-items: center; /* Căn giữa các item bên trong theo trục dọc */
+    }
+
+    .faculty-info {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .faculty-degree {
+        text-align: center;
+        width: 100%;
+    }
+
+    /* Nút xem thêm nằm giữa */
+    .view-all-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    /* Section Title Mini */
+    .section-title-sm {
+        font-size: 1.5rem;
+        letter-spacing: 1px;
+    }
+
+    .section-underline-center {
+        width: 40px;
+        height: 3px;
+        background: var(--gold-accent);
+        margin: 8px auto;
+    }
+
+    /* Micro Card Design */
+  
+
+
+    .faculty-avatar {
+        width: 80px; /* Nhỏ gọn */
+        height: 80px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid #f8f9fa;
+        margin-bottom: 10px;
+    }
+
+        .faculty-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .faculty-name-sm {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: var(--navy-primary);
+    }
+
+    .faculty-rank-tag {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--gold-accent);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+        background: rgba(197, 160, 89, 0.1);
+        padding: 2px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .faculty-degree-sm {
+        font-size: 0.75rem;
+        color: #666;
+        margin-bottom: 10px;
+        line-height: 1.2;
+    }
+
+    .faculty-meta-compact {
+        font-size: 0.7rem;
+        color: #999;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        border-top: 1px solid #f5f5f5;
+        padding-top: 8px;
+        width: 100%;
+    }
+
+    /* Button View More Luxury */
+    .btn-view-more {
+        background: none;
+        border: 1px solid var(--gold-accent);
+        color: var(--gold-accent);
+        padding: 8px 24px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+        .btn-view-more:hover {
+            background: var(--gold-accent);
+            color: white;
+        }
+    /* --- FACULTY CARD LUXURY DESIGN --- */
+    .section-header-center {
+        text-align: center;
+        margin-bottom: 3.5rem;
+    }
+
+    .faculty-card {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        border: 1px solid rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    }
+
+        .faculty-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(10, 25, 47, 0.12);
+            border-color: var(--gold-accent);
+        }
+
+    .faculty-avatar-circle {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid #f8f9fa;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: 0.3s;
+    }
+
+    .faculty-card:hover .faculty-avatar-circle {
+        border-color: var(--gold-accent);
+        transform: scale(1.05);
+    }
+
+    .faculty-avatar-circle img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .faculty-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--navy-primary);
+        margin-bottom: 6px;
+        min-height: 2.3em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .faculty-rank-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--gold-accent);
+        background: rgba(197, 160, 89, 0.12);
+        padding: 4px 14px;
+        border-radius: 50px;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .faculty-degree {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        line-height: 1.4;
+        flex-grow: 1;
+    }
+
+    .faculty-meta {
+        width: 100%;
+        padding-top: 15px;
+        border-top: 1px dashed #eee;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: #888;
+    }
+
+        .meta-row i {
+            color: var(--gold-accent);
+            font-size: 0.7rem;
+        }
+
+    /* Nút xem thêm */
+    .view-all-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 3rem;
+    }
+
+    .btn-view-more {
+        background: white;
+        border: 2px solid var(--gold-accent);
+        color: var(--gold-accent);
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        transition: 0.3s;
+        box-shadow: 0 4px 15px rgba(197, 160, 89, 0.2);
+    }
+
+        .btn-view-more:hover {
+            background: var(--gold-accent);
+            color: white;
+            transform: scale(1.05);
+        }
+
+    <style >
+    /* Đảm bảo container nút luôn hiển thị và căn giữa */
+    .view-all-container {
+        display: flex !important;
+        justify-content: center;
+        margin-top: 4rem; /* Tăng khoảng cách để nút nổi bật hơn */
+        width: 100%;
+    }
+
+    .btn-view-more {
+        display: inline-flex;
+        align-items: center;
+        background: white;
+        border: 2px solid #c5a059; /* var(--gold-accent) */
+        color: #c5a059;
+        padding: 12px 35px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-decoration: none; /* Bỏ gạch chân thẻ a */
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(197, 160, 89, 0.15);
+    }
+
+        .btn-view-more:hover {
+            background: #c5a059;
+            color: white !important;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(197, 160, 89, 0.3);
+        }
+</style>
 </style>
 
 @code {
     private List<PostDto>? recentPosts;
     private List<CategoryDto>? categories;
     private bool isLoading = true;
+    private bool showAllFaculty = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -602,5 +964,58 @@
                 StateHasChanged(); // Cập nhật lại UI sau khi đã có dữ liệu
             }
         }
+ 
     }
+
+    public class FacultyMember
+    {
+        public string Name { get; set; } = "";
+        public string Degree { get; set; } = "";
+        public string BirthDate { get; set; } = "";
+        public string HomeTown { get; set; } = "";
+        public string WorkingPeriod { get; set; } = "";
+        public string Position { get; set; } = "";
+        public string ImageUrl { get; set; } = ""; // Ảnh mặc định
+    }
+
+    private List<FacultyMember> facultyList = new List<FacultyMember>
+    {
+        new FacultyMember {
+            Name = "Hồ Anh Tuấn",
+            Degree = "Phó Giáo sư, Tiến sỹ",
+            BirthDate = "14/03/1984",
+            HomeTown = "Tỉnh Nghệ An",
+            WorkingPeriod = "Tháng 01/2025",
+            Position = "Trưởng Khoa",
+            ImageUrl = "/Images/DsGv/1.jpg"
+        },
+        new FacultyMember {
+            Name = "Nguyễn Thị Phương Liên",
+            Degree = "Phó Giáo sư, Tiến sỹ",
+            BirthDate = "01/8/1977",
+            HomeTown = "Yên Đồng - Ninh Bình",
+            WorkingPeriod = "02/2007-01/2016; 07/2020",
+            Position = "Phó Trưởng Khoa",
+            ImageUrl = "/Images/DsGv/2.jpg"
+        },
+        new FacultyMember {
+            Name = "Lương Tuấn Anh",
+            Degree = "Phó Giáo sư, Tiến sỹ",
+            BirthDate = "02/12/1982",
+            HomeTown = "Trạm Thản - Phú Thọ",
+            WorkingPeriod = "Từ tháng 07/2020",
+            Position = "Phó Trưởng Khoa",
+            ImageUrl = "/Images/DsGv/3.jpg"
+        },
+        new FacultyMember {
+            Name = "Đỗ Trường Giang",
+            Degree = "Trung tá, Phó Giáo sư, Tiến sỹ",
+            BirthDate = "05/4/1985",
+            HomeTown = "Vĩnh Phú – Phú Thọ",
+            WorkingPeriod = "Từ tháng 07/2008",
+            Position = "Phó Trưởng Khoa",
+            ImageUrl = "/Images/DsGv/4.jpg"
+        }
+        // Thêm các giảng viên khác vào đây...
+    };
 }

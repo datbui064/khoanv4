@@ -1,0 +1,398 @@
+﻿@page "/faculty-members"
+@using KhoaNVCB_Client.Models
+
+<PageTitle>Đội ngũ Giảng viên - Khoa An ninh Chính trị Nội bộ</PageTitle>
+
+@* --- BREADCRUMB & HEADER --- *@
+<div class="faculty-hero">
+    <div class="container text-center">
+        <nav aria-label="breadcrumb" class="d-flex justify-content-center">
+            <ol class="breadcrumb custom-breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Đội ngũ giảng viên</li>
+            </ol>
+        </nav>
+        <h1 class="header-title">ĐỘI NGŨ GIẢNG VIÊN & CHUYÊN GIA</h1>
+        <div class="header-divider"></div>
+        <p class="header-subtitle">Hệ thống tri thức chuyên sâu và kinh nghiệm thực tiễn từ những chuyên gia hàng đầu trong lĩnh vực bảo vệ chính trị nội bộ.</p>
+    </div>
+</div>
+
+@* --- MAIN CONTENT --- *@
+<div class="container py-5">
+    <div class="row g-4 justify-content-center">
+        @foreach (var member in facultyList)
+        {
+            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-12">
+                <div class="faculty-item-card">
+                    @* Phần nền trang trí phía trên thẻ *@
+                    <div class="card-accent-top"></div>
+
+                    @* Ảnh đại diện nổi *@
+                    <div class="avatar-wrapper">
+                        <img src="@member.ImageUrl" alt="@member.Name" onerror="this.src='/Images/Logo_hoc_vien_ANND.png'" />
+                    </div>
+
+                    <div class="card-main-content">
+                        <div class="rank-badge">@member.Position</div>
+                        <h4 class="member-name">@member.Name</h4>
+                        <p class="member-degree">@member.Degree</p>
+
+                        <div class="info-group">
+                            <div class="info-row">
+                                <i class="oi oi-calendar icon-gold"></i>
+                                <span class="info-label">Ngày sinh:</span>
+                                <span class="info-text">@member.BirthDate</span>
+                            </div>
+                            <div class="info-row">
+                                <i class="oi oi-map-marker icon-gold"></i>
+                                <span class="info-label">Quê quán:</span>
+                                <span class="info-text text-truncate">@member.HomeTown</span>
+                            </div>
+                            <div class="info-row">
+                                <i class="oi oi-briefcase icon-gold"></i>
+                                <span class="info-label">Công tác:</span>
+                                <span class="info-text">@member.WorkingPeriod</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    /* --- BIẾN MÀU SẮC --- */
+    :root {
+        --navy-dark: #0a192f;
+        --gold-primary: #c5a059;
+        --text-gray: #64748b;
+        --bg-light: #f1f5f9;
+        --white: #ffffff;
+    }
+
+    /* --- HEADER SECTION --- */
+    .faculty-hero {
+        background: linear-gradient(rgba(10, 25, 47, 0.85), rgba(10, 25, 47, 0.95)), url('/Images/bg-academy.jpg') center/cover no-repeat;
+        padding: 80px 0 60px 0;
+        border-bottom: 5px solid var(--gold-primary);
+    }
+
+    .custom-breadcrumb .breadcrumb-item,
+    .custom-breadcrumb .breadcrumb-item a {
+        color: rgba(255,255,255,0.7);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+        .custom-breadcrumb .breadcrumb-item.active {
+            color: var(--gold-primary);
+        }
+
+    .header-title {
+        color: var(--white);
+        font-weight: 800;
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        margin-top: 15px;
+    }
+
+    .header-divider {
+        width: 60px;
+        height: 4px;
+        background: var(--gold-primary);
+        margin: 20px auto;
+    }
+
+    .header-subtitle {
+        color: rgba(255,255,255,0.8);
+        max-width: 700px;
+        margin: 0 auto;
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    /* --- FACULTY CARD STYLE --- */
+    .faculty-item-card {
+        background: var(--white);
+        border-radius: 24px;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #e2e8f0;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+        .faculty-item-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            border-color: var(--gold-primary);
+        }
+
+    .card-accent-top {
+        height: 90px;
+        background: var(--navy-dark);
+        width: 100%;
+    }
+
+    .avatar-wrapper {
+        width: 130px;
+        height: 130px;
+        margin: -65px auto 15px auto;
+        border-radius: 50%;
+        border: 6px solid var(--white);
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        background: var(--white);
+        z-index: 2;
+        transition: 0.3s;
+    }
+
+    .faculty-item-card:hover .avatar-wrapper {
+        border-color: var(--gold-primary);
+    }
+
+    .avatar-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .card-main-content {
+        padding: 0 25px 25px 25px;
+        text-align: center;
+        flex-grow: 1;
+    }
+
+    .rank-badge {
+        background: rgba(197, 160, 89, 0.12);
+        color: var(--gold-primary);
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 5px 15px;
+        border-radius: 50px;
+        text-transform: uppercase;
+        display: inline-block;
+        margin-bottom: 12px;
+        letter-spacing: 0.5px;
+    }
+
+    .member-name {
+        color: var(--navy-dark);
+        font-weight: 800;
+        font-size: 1.25rem;
+        margin-bottom: 8px;
+    }
+
+    .member-degree {
+        color: var(--text-gray);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        font-style: italic;
+    }
+
+    /* Chi tiết thông tin */
+    .info-group {
+        text-align: left;
+        background: var(--bg-light);
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .info-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+        color: #334155;
+    }
+
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+
+    .icon-gold {
+        color: var(--gold-primary);
+        font-size: 0.8rem;
+        margin-top: 3px;
+    }
+
+    .info-label {
+        font-weight: 700;
+        color: var(--navy-dark);
+        min-width: 75px;
+    }
+
+    /* Nút chân thẻ */
+    .card-footer-btn {
+        padding: 20px 25px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .btn-profile {
+        width: 100%;
+        background: var(--white);
+        border: 1px solid #cbd5e1;
+        color: var(--navy-dark);
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+
+        .btn-profile:hover {
+            background: var(--navy-dark);
+            color: var(--white);
+            border-color: var(--navy-dark);
+        }
+
+    /* RESPONSIVE */
+    @@media (max-width: 768px) {
+        .faculty-hero {
+            padding: 40px 0;
+        }
+
+        .avatar-wrapper {
+            width: 110px;
+            height: 110px;
+            margin-top: -55px;
+        }
+    }
+</style>
+
+@code {
+    private List<FacultyMember> facultyList = new List<FacultyMember>
+    {
+        new FacultyMember {
+            Name = "Hồ Anh Tuấn",
+            Degree = "Phó Giáo sư, Tiến sỹ",
+            BirthDate = "14/03/1984",
+            HomeTown = "Tỉnh Nghệ An",
+            WorkingPeriod = "Tháng 01/2025",
+            Position = "Trưởng Khoa",
+             ImageUrl = "/Images/DsGv/1.jpg"
+        },
+        new FacultyMember {
+            Name = "Nguyễn Thị Phương Liên",
+            Degree = "Phó Giáo sư, Tiến sỹ",
+            BirthDate = "01/8/1977",
+            HomeTown = "Yên Đồng - Ninh Bình",
+            WorkingPeriod = "Từ 07/2020",
+            Position = "Phó Trưởng Khoa",
+             ImageUrl = "/Images/DsGv/2.jpg"
+        },
+        new FacultyMember {
+            Name = "Lương Tuấn Anh",
+            Degree = "Phó Giáo sư, Tiến sỹ",
+            BirthDate = "02/12/1982",
+            HomeTown = "Trạm Thản - Phú Thọ",
+            WorkingPeriod = "Từ tháng 07/2020",
+            Position = "Phó Trưởng Khoa",
+            ImageUrl = "/Images/DsGv/3.jpg"
+        },
+        new FacultyMember {
+            Name = "Đỗ Trường Giang",
+            Degree = "Trung tá, Phó Giáo sư, Tiến sỹ",
+            BirthDate = "05/4/1985",
+            HomeTown = "Vĩnh Phú – Phú Thọ",
+            WorkingPeriod = "Từ tháng 07/2008",
+            Position = "Phó Trưởng Khoa",
+             ImageUrl = "/Images/DsGv/4.jpg"
+        },
+   
+
+        // --- ĐỘI NGŨ GIẢNG VIÊN ---
+        new FacultyMember {
+            Name = "Bùi Ngọc Giao",
+            Degree = "Thượng tá, Tiến sỹ",
+            BirthDate = "12/10/1979",
+            HomeTown = "Vũ Dương, Ninh Bình",
+            WorkingPeriod = "Tháng 04/2010",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/giao.jpg"
+        },
+        new FacultyMember {
+            Name = "Trương Xuân Chính",
+            Degree = "Trung tá, Tiến sỹ",
+            BirthDate = "15/9/1984",
+            HomeTown = "Tỉnh Phú Thọ",
+            WorkingPeriod = "Tháng 7/2009",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/xuan-chinh.jpg"
+        },
+        new FacultyMember {
+            Name = "Trần Minh Hoạt",
+            Degree = "Thượng tá, Tiến sỹ",
+            BirthDate = "05/10/1976",
+            HomeTown = "Vũ Thư, Hưng Yên",
+            WorkingPeriod = "Tháng 02/2010",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/hoat.jpg"
+        },
+        new FacultyMember {
+            Name = "Trương Quốc Việt",
+            Degree = "Thiếu tá, Thạc sĩ",
+            BirthDate = "15/5/1989",
+            HomeTown = "Yên Thắng - Ninh Bình",
+            WorkingPeriod = "Tháng 6/2013",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/viet.jpg"
+        },
+        new FacultyMember {
+            Name = "Nguyễn Trung Hiếu",
+            Degree = "Thiếu tá, Thạc sĩ",
+            BirthDate = "12/10/1989",
+            HomeTown = "Hồng Quang, Ninh Bình",
+            WorkingPeriod = "Tháng 6/2012",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/hieu.jpg"
+        },
+        new FacultyMember {
+            Name = "Trần Thu Hà",
+            Degree = "Thiếu tá, Thạc sĩ",
+            BirthDate = "12/3/1989",
+            HomeTown = "Tỉnh Ninh Bình",
+            WorkingPeriod = "Tháng 07/2020",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/ha.jpg"
+        },
+        new FacultyMember {
+            Name = "Phạm Ngọc Tân",
+            Degree = "Đại úy, Tiến sĩ",
+            BirthDate = "20/10/1991",
+            HomeTown = "Nam Hồng – Ninh Bình",
+            WorkingPeriod = "Tháng 01/2015",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/tan.jpg"
+        },
+        new FacultyMember {
+            Name = "Vũ Công Chính",
+            Degree = "Đại úy, Thạc sĩ",
+            BirthDate = "17/9/1991",
+            HomeTown = "Nam Minh – Ninh Bình",
+            WorkingPeriod = "Tháng 01/2015",
+            Position = "Giảng viên",
+            ImageUrl = "/Images/DsGv/cong-chinh.jpg"
+        }
+    };
+    
+
+    public class FacultyMember
+    {
+        public string Name { get; set; } = "";
+        public string Degree { get; set; } = "";
+        public string BirthDate { get; set; } = "";
+        public string HomeTown { get; set; } = "";
+        public string WorkingPeriod { get; set; } = "";
+        public string Position { get; set; } = "";
+        public string ImageUrl { get; set; } = "/Images/Logo_hoc_vien_ANND.png";
+    }
+}

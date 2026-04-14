@@ -50,9 +50,21 @@ else
             <label class="form-label fw-bold">Chuyên mục <span class="text-danger">*</span></label>
             <select class="form-select" @bind="post.CategoryId">
                 <option value="0">-- Chọn chuyên mục --</option>
-                @foreach (var cat in categories)
+                @if (categories != null)
                 {
-                    <option value="@cat.CategoryId">@cat.CategoryName</option>
+                    @foreach (var parent in categories.Where(c => c.ParentId == null))
+                    {
+                        <option value="@parent.CategoryId" class="fw-bold text-navy" style="background-color: #f8f9fa;">
+                            @parent.CategoryName (Gốc)
+                        </option>
+
+                        @foreach (var child in categories.Where(c => c.ParentId == parent.CategoryId))
+                        {
+                            <option value="@child.CategoryId">
+                                &nbsp;&nbsp;&nbsp;└── @child.CategoryName
+                            </option>
+                        }
+                    }
                 }
             </select>
         </div>
@@ -63,12 +75,26 @@ else
                 <option value="Image">Tin tức (Bài viết kèm ảnh)</option>
                 <option value="Video">Video (Clip/YouTube)</option>
                 <option value="Law">Quy định Pháp luật (PDF/Word)</option>
-                <option value="Document">Văn bản liên quan (PDF/Word)</option>
+                <option value="Document">Văn bản liên quan (PDF/Word/Link)</option>
                 <option value="Propaganda">Tuyên truyền (Clip/Youtube)</option>
             </select>
         </div>
-
-        <div class="col-md-6 mb-3">
+        <div class="col-md-3 mb-3">
+            <label class="form-label fw-bold">Phân loại nâng cao (YearType)</label>
+            <select class="form-select border-info" @bind="post.YearType">
+                <option value="">-- Không phân loại --</option>
+                <optgroup label="Văn bản quy định">
+                    <option value="1">Giai đoạn 2000 - 2018</option>
+                    <option value="2">Giai đoạn 2018 - 2025</option>
+                    <option value="3">Giai đoạn 2025 - Nay</option>
+                </optgroup>
+                <optgroup label="Ví dụ & Vụ việc">
+                    <option value="4">Bài báo / Vụ việc tiêu biểu</option>
+                    <option value="5">Video minh họa / Tư liệu</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="col-md-3 mb-3">
             <label class="form-label fw-bold">Ảnh bìa (Thumbnail)</label>
             <InputFile OnChange="HandleImageCoverUpload" class="form-control" accept="image/*" />
             @if (isUploadingImage)
@@ -78,19 +104,30 @@ else
             @if (!string.IsNullOrEmpty(post.ImageUrl))
             {
                 <div class="mt-2 text-center">
-                    <img src="@post.ImageUrl" class="rounded shadow-sm" style="max-height: 120px; object-fit: contain;" />
+                    <img src="@post.ImageUrl" class="rounded shadow-sm" style="max-height: 80px; object-fit: contain;" />
                 </div>
             }
         </div>
     </div>
 
-    @* 4. PHẦN MỞ RỘNG THEO LOẠI NỘI DUNG *@
-    @if (post.SourceType == "Video" || post.SourceType == "Propaganda")
+    @* 4. PHẦN MỞ RỘNG *@
+    @if (post.SourceType == "Video" || post.SourceType == "Propaganda" || post.YearType == 5)
     {
         <div class="mb-4 p-3 bg-white border border-danger rounded-2 shadow-sm" style="border-left-width: 5px !important;">
             <label class="form-label fw-bold text-danger"><i class="oi oi-video"></i> Link YouTube</label>
             <input class="form-control" @bind="post.OriginalUrl" placeholder="https://www.youtube.com/watch?v=..." />
-            <small class="text-muted">Dán link YouTube để hệ thống tự nhúng video vào bài giảng.</small>
+        </div>
+    }
+    else if (post.YearType == 4)
+    {
+        <div class="mb-4 p-3 bg-white border border-primary rounded-2 shadow-sm" style="border-left-width: 5px !important;">
+            <label class="form-label fw-bold text-primary"><i class="oi oi-link-intact"></i> Liên kết bài báo (URL) hoặc Đính kèm file</label>
+            <div class="input-group mb-2">
+                <span class="input-group-text bg-light">Link bài viết</span>
+                <input class="form-control" @bind="post.OriginalUrl" placeholder="https://baocongan.com.vn/..." />
+            </div>
+            <div class="text-center my-2 text-muted small">--- HOẶC ---</div>
+            <InputFile OnChange="HandleWordUpload" class="form-control" accept=".pdf,.docx" />
         </div>
     }
     else if (post.SourceType == "Law" || post.SourceType == "Document")
@@ -98,23 +135,6 @@ else
         <div class="mb-4 p-3 bg-white border border-info rounded-2 shadow-sm" style="border-left-width: 5px !important;">
             <label class="form-label fw-bold text-info"><i class="oi oi-paperclip"></i> Đính kèm tệp tài liệu (PDF, DOCX)</label>
             <InputFile OnChange="HandleWordUpload" class="form-control" accept=".pdf,.docx" />
-
-            @if (isUploadingFile)
-            {
-                <div class="text-info small mt-1"><span class="spinner-border spinner-border-sm"></span> Đang tải tệp lên server...</div>
-            }
-            @if (isParsingWord)
-            {
-                <div class="text-warning small mt-1"><span class="spinner-border spinner-border-sm"></span> Đang trích xuất nội dung văn bản...</div>
-            }
-
-            @if (!string.IsNullOrEmpty(post.OriginalUrl))
-            {
-                <div class="mt-2 p-2 bg-light rounded border d-flex justify-content-between align-items-center">
-                    <span class="small text-truncate me-2">📎 File hiện tại: <strong>@GetFileName(post.OriginalUrl)</strong></span>
-                    <button type="button" class="btn btn-sm btn-outline-danger" @onclick='() => post.OriginalUrl = ""'>Gỡ bỏ</button>
-                </div>
-            }
         </div>
     }
 
@@ -132,10 +152,8 @@ else
 
 @code {
     [Parameter] public int id { get; set; }
-
     private PostDto post = new() { SourceType = "Image", Status = "Published" };
     private List<CategoryDto> categories = new();
-
     private string? errorMessage;
     private bool isLoading = true;
     private bool isSubmitting = false;
@@ -156,13 +174,8 @@ else
                 else errorMessage = "Không tìm thấy nội dung.";
             }
         }
-        finally
-        {
-            isLoading = false;
-        }
+        finally { isLoading = false; }
     }
-
-    private string GetFileName(string url) => string.IsNullOrEmpty(url) ? "" : System.IO.Path.GetFileName(url);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -173,8 +186,7 @@ else
         }
     }
 
-    [JSInvokable]
-    public void UpdateContentFromJS(string content) => post.Content = content;
+    [JSInvokable] public void UpdateContentFromJS(string content) => post.Content = content;
 
     private async Task HandleImageCoverUpload(InputFileChangeEventArgs e)
     {
@@ -191,32 +203,14 @@ else
     private async Task HandleWordUpload(InputFileChangeEventArgs e)
     {
         isUploadingFile = true;
-        errorMessage = null;
-
         try
         {
-            // 1. Upload file gốc lên server
             var fileUrl = await PhotoUploadService.UploadPhotoAsync(e.File);
             if (string.IsNullOrEmpty(fileUrl)) return;
-
             post.OriginalUrl = fileUrl;
-
-            // 2. Kiểm tra dung lượng hoặc loại file
-            // Nếu file > 2MB hoặc là PDF, ưu tiên dùng Iframe để hiển thị thay vì trích xuất nội dung vào Editor
             var ext = Path.GetExtension(e.File.Name).ToLower();
-            if (e.File.Size > 2 * 1024 * 1024 || ext == ".pdf")
+            if (ext == ".docx")
             {
-                // Tạo mã nhúng PDF thay vì trích xuất text
-                post.Content = $@"<p>Nội dung tài liệu chi tiết:</p>
-                             <iframe src='{fileUrl}' width='100%' height='600px' style='border:none;'></iframe>
-                             <p>Tải về: <a href='{fileUrl}' target='_blank'>Click vào đây</a></p>";
-
-                await JS.InvokeVoidAsync("setTinyMCEContent", post.Content);
-                errorMessage = "File lớn đã được chuyển sang chế độ nhúng (Iframe).";
-            }
-            else if (ext == ".docx")
-            {
-                // Chỉ trích xuất với file Word nhẹ
                 isParsingWord = true;
                 StateHasChanged();
                 var extractedHtml = await PostService.ExtractWordAsync(e.File);
@@ -228,12 +222,7 @@ else
             }
         }
         catch (Exception ex) { errorMessage = "Lỗi: " + ex.Message; }
-        finally
-        {
-            isUploadingFile = false;
-            isParsingWord = false;
-            StateHasChanged();
-        }
+        finally { isUploadingFile = false; isParsingWord = false; StateHasChanged(); }
     }
 
     private string GetYouTubeEmbed(string url)
@@ -242,9 +231,7 @@ else
         var videoId = "";
         if (url.Contains("v=")) videoId = url.Split("v=")[1].Split("&")[0];
         else if (url.Contains("youtu.be/")) videoId = url.Split("youtu.be/")[1].Split("?")[0];
-
         if (string.IsNullOrEmpty(videoId)) return $"<p>Link video: {url}</p>";
-
         return $@"<div class='ratio ratio-16x9'><iframe src='https://www.youtube.com/embed/{videoId}' title='YouTube video' allowfullscreen></iframe></div>";
     }
 
@@ -252,45 +239,56 @@ else
     {
         errorMessage = null;
         isSubmitting = true;
-        if (!string.IsNullOrEmpty(post.OriginalUrl))
-        {
-            post.Content = $@"<div class='pdf-container' style='height:800px;'>
-            <iframe src='https://docs.google.com/viewer?url={post.OriginalUrl}&embedded=true'
-                    width='100%' height='100%' frameborder='0'></iframe>
-        </div>
-        <p>Tải file gốc tại đây: <a href='{post.OriginalUrl}'>Click để tải</a></p>";
-        }
-
-
         try
         {
-            // Lấy nội dung mới nhất từ Editor
             if (isEditorInitialized)
             {
                 post.Content = await JS.InvokeAsync<string>("getTinyMCEContent", "tiny-editor");
             }
 
-            // Validate dữ liệu
             if (string.IsNullOrWhiteSpace(post.Title)) { errorMessage = "Vui lòng nhập tiêu đề!"; isSubmitting = false; return; }
             if (post.CategoryId == 0) { errorMessage = "Vui lòng chọn chuyên mục!"; isSubmitting = false; return; }
 
-            // Xử lý Video tự động nếu Content trống
-            if ((post.SourceType == "Video" || post.SourceType == "Propaganda") && !string.IsNullOrEmpty(post.OriginalUrl))
+            bool isContentEmpty = string.IsNullOrWhiteSpace(post.Content) || post.Content == "<p>&nbsp;</p>";
+
+            if (isContentEmpty && !string.IsNullOrEmpty(post.OriginalUrl))
             {
-                if (string.IsNullOrWhiteSpace(post.Content) || post.Content == "<p>&nbsp;</p>")
+                // TRƯỜNG HỢP 1: LINK BÀI BÁO (WEB)
+                if (post.YearType == 4 && post.OriginalUrl.StartsWith("http") && !post.OriginalUrl.Contains("drive.google.com"))
+                {
+                    post.Content = $@"
+                        <div class='web-link-card p-4 border rounded bg-light text-center mb-4'>
+                            <div class='mb-3'><i class='bi bi-globe2' style='font-size: 3rem; color: #0d6efd;'></i></div>
+                            <h5 class='fw-bold'>XEM NỘI DUNG TẠI TRANG NGUỒN</h5>
+                            <p class='text-muted'>Hệ thống đang kết nối tới liên kết báo chí bên thứ ba.</p>
+                            <a href='{post.OriginalUrl}' target='_blank' class='btn btn-primary btn-lg shadow-sm'>
+                                <i class='bi bi-box-arrow-up-right me-2'></i> TRUY CẬP BÀI VIẾT
+                            </a>
+                        </div>
+                        <div class='ratio ratio-16x9 border rounded shadow-sm' style='height: 800px;'>
+                            <iframe src='{post.OriginalUrl}' title='External Content' allowfullscreen></iframe>
+                        </div>";
+                }
+                // TRƯỜNG HỢP 2: VIDEO
+                else if (post.YearType == 5 || post.SourceType == "Video")
                 {
                     post.Content = GetYouTubeEmbed(post.OriginalUrl);
+                }
+                // TRƯỜNG HỢP 3: PDF / FILE TÀI LIỆU
+                else if (post.OriginalUrl.EndsWith(".pdf") || post.SourceType == "Law")
+                {
+                    post.Content = $@"<div class='pdf-viewer'><iframe src='{post.OriginalUrl}' width='100%' height='800px'></iframe></div>";
                 }
             }
 
             bool success = (id > 0) ? await PostService.UpdateAsync(id, post) : await PostService.CreateAsync(post);
-
             if (success) Nav.NavigateTo("/admin/posts");
-            else errorMessage = "Không thể lưu bài viết. Vui lòng kiểm tra lại thông tin.";
+            else errorMessage = "Lỗi: Không thể lưu bài viết.";
         }
-        catch (Exception ex) { errorMessage = "Lỗi hệ thống: " + ex.Message; }
+        catch (Exception ex) { errorMessage = "Lỗi: " + ex.Message; }
         finally { isSubmitting = false; }
     }
 
+    private string GetFileName(string url) => string.IsNullOrEmpty(url) ? "" : System.IO.Path.GetFileName(url);
     public void Dispose() => JS.InvokeVoidAsync("tinymce.execCommand", "mceRemoveEditor", false, "tiny-editor");
 }

@@ -564,8 +564,10 @@
                 if (allCategories != null)
                 {
                     categories = allCategories
-                        .Where(c => !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase))
-                        .ToList();
+                       .Where(c => 
+            !c.CategoryName.Equals("Tuyên truyền", StringComparison.OrdinalIgnoreCase) && 
+            !c.CategoryName.Equals("Video", StringComparison.OrdinalIgnoreCase)) // THÊM DÒNG NÀY
+        .ToList();
                 }
 
                 // 3. Xử lý Bài viết (Posts)

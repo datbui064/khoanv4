@@ -35,6 +35,7 @@ namespace KhoaNVCB_Client.Models
 
         // Bổ sung thêm tên Category để hiển thị trên danh sách bài viết cho tiện
         public string? CategoryName { get; set; }
+        public int? YearType { get; set; }
 
         // Bổ sung tên Tác giả (Giảng viên) để hiển thị
         public string? AuthorName { get; set; }

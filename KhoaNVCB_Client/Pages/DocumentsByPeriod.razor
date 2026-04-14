@@ -1,0 +1,113 @@
+﻿@page "/documents/{PeriodSlug}"
+@using KhoaNVCB_Client.Models
+@using KhoaNVCB_Client.Services
+@inject PostService PostService
+@inject CategoryService CategoryService
+@inject NavigationManager Nav
+
+<div class="container py-4">
+    <h4 class="fw-bold text-navy-blue border-bottom pb-2 mb-4">
+        VĂN BẢN QUY ĐỊNH: @PeriodTitle
+    </h4>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-3" style="width: 80px;">FILE</th>
+                        <th>TIÊU ĐỀ VĂN BẢN</th>
+                        <th class="text-end pe-3">NGÀY BAN HÀNH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (isLoading)
+                    {
+                        <tr><td colspan="3" class="text-center py-5"><div class="spinner-border text-danger"></div></td></tr>
+                    }
+                    else if (!posts.Any())
+                    {
+                        <tr><td colspan="3" class="text-center py-5 text-muted">Không có văn bản nào trong giai đoạn này.</td></tr>
+                    }
+                    else
+                    {
+                        @foreach (var post in posts)
+                        {
+                            <tr @onclick='() => Nav.NavigateTo($"/post/{post.PostId}")' style="cursor: pointer;">
+                                <td class="ps-3 text-center">
+                                    <i class="bi bi-file-earmark-pdf text-danger fs-3"></i>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@post.Title</div>
+                                    <small class="text-muted">@post.Summary</small>
+                                </td>
+                                <td class="text-end pe-3 small">@post.CreatedDate?.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    @code {
+        [Parameter] public string PeriodSlug { get; set; } = "";
+
+        // Ánh xạ tiêu đề hiển thị
+        private string PeriodTitle => PeriodSlug switch
+        {
+            "2000-2018" => "Giai đoạn 2000 - 2018",
+            "2018-2025" => "Giai đoạn 2018 - 2025",
+            "vu-viec-tieu-bieu" => "Các bài báo & Vụ việc tiêu biểu",
+            "video-tu-lieu" => "Video minh họa & Tư liệu",
+            _ => "Giai đoạn 2025 - Nay"
+        };
+
+        // Ánh xạ Slug sang ID số để lọc trong Database (YearType)
+        private int? YearTypeFilter => PeriodSlug switch
+        {
+            "2000-2018" => 1,
+            "2018-2025" => 2,
+            "2025-now" => 3,
+            "vu-viec-tieu-bieu" => 4, // Set YearType = 4 cho bài báo
+            "video-tu-lieu" => 5,    // Set YearType = 5 cho video
+            _ => null
+        };
+
+        private List<PostListItemDto> posts = new();
+        private bool isLoading = true;
+
+        protected override async Task OnParametersSetAsync()
+        {
+            await LoadDocs();
+        }
+
+        private async Task LoadDocs()
+        {
+            isLoading = true;
+            posts.Clear();
+
+            // CẬP NHẬT: Truyền YearTypeFilter vào hàm gọi API
+            // Giả sử hàm GetPublicPostsPagedAsync của bạn nhận tham số yearType ở vị trí phù hợp
+            // Dựa theo Controller bạn gửi trước đó: (page, pageSize, searchTerm, categoryName, sourceType, yearType, sortBy)
+
+            var result = await PostService.GetPublicPostsPagedAsync(
+                page: 1,
+                pageSize: 100,
+                searchTerm: "",
+                categoryName: null,
+                sourceType: "Document", // Hoặc để null nếu muốn lấy tất cả
+                yearType: YearTypeFilter,
+                sortBy: "newest"
+            );
+
+            if (result != null)
+            {
+                posts = result.Items;
+            }
+            isLoading = false;
+        }
+    }
+}
